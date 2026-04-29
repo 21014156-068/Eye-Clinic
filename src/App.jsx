@@ -12,6 +12,7 @@ import { AdminRoute } from "./admin/AdminRoute";
 import { PublicSiteProvider } from "./hooks/PublicSiteContext";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminPanelPage from "./pages/AdminPanelPage";
+import ErrorPage from "./pages/ErrorPage";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
@@ -26,7 +27,6 @@ function getRouteTheme(pathname) {
   if (pathname === "/") {
     return "home";
   }
-
   return pathname.replaceAll("/", "") || "home";
 }
 
@@ -67,7 +67,7 @@ function RouteRenderer({ location }) {
               }
             />
             <Route path="/admin/*" element={<AdminLoginPage />} />
-            <Route path="*" element={<Error />} />
+            <Route path="*" element={<ErrorPage />} />
           </Routes>
         </Suspense>
       </motion.div>
@@ -79,17 +79,33 @@ function AppShell() {
   const location = useLocation();
   const routeTheme = getRouteTheme(location.pathname);
 
+  // Check if current path starts with /admin
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
   return (
     <div className={`site-shell theme-${routeTheme}`}>
       <ScrollToTop />
       <div className="site-noise" aria-hidden="true" />
-      <div className="site-beam site-beam-a" aria-hidden="true" />
-      <div className="site-beam site-beam-b" aria-hidden="true" />
-      <SiteUtilityBar items={utilityHighlights} />
-      <SiteHeader />
+
+      {/* Hide Utility Bar, Header, and Beams on Admin pages */}
+      {!isAdminRoute && (
+        <>
+          <div className="site-beam site-beam-a" aria-hidden="true" />
+          <div className="site-beam site-beam-b" aria-hidden="true" />
+          <SiteUtilityBar items={utilityHighlights} />
+          <SiteHeader />
+        </>
+      )}
+
       <RouteRenderer location={location} />
-      <SiteFooter brand={brand} />
-      <FloatingDock brand={brand} />
+
+      {/* Hide Footer and Floating Dock on Admin pages */}
+      {!isAdminRoute && (
+        <>
+          <SiteFooter brand={brand} />
+          <FloatingDock brand={brand} />
+        </>
+      )}
     </div>
   );
 }
