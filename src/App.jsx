@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { FloatingDock } from "./components/FloatingDock";
 import { SiteHeader } from "./components/SiteHeader";
 import { SiteFooter } from "./components/SiteFooter";
-import { SiteUtilityBar } from "./components/SiteUtilityBar";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { brand, utilityHighlights } from "./data/siteContent";
 import { AdminAuthProvider } from "./admin/AdminAuthContext";
@@ -92,7 +91,7 @@ function AppShell() {
         <>
           <div className="site-beam site-beam-a" aria-hidden="true" />
           <div className="site-beam site-beam-b" aria-hidden="true" />
-          <SiteUtilityBar items={utilityHighlights} />
+
           <SiteHeader />
         </>
       )}
