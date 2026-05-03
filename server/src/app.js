@@ -26,4 +26,3 @@ app.use((error, _request, response, _next) => {
     message: error.message || "Something went wrong on the server.",
   });
 });
-

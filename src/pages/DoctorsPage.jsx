@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatedSection } from "../components/AnimatedSection";
-
-import { doctors, doctorsPage } from "../data/siteContent";
+import { usePublicSite } from "../hooks/PublicSiteContext";
 
 const clinicBoard = [
   {
@@ -19,34 +18,14 @@ const clinicBoard = [
   },
 ];
 
-const DOCTOR_FAQ = [
-  {
-    question: "How do I choose the right doctor?",
-    answer:
-      "Start by selecting your issue (LASIK, cataract, retina, glaucoma, pediatric). Then check experience, availability, and book a consultation for candidacy screening.",
-  },
-  {
-    question: "Can I switch doctors after booking?",
-    answer:
-      "Yes. If your case needs a different specialist, or you prefer another doctor, the clinic can re-route you to the best match.",
-  },
-  {
-    question: "Are consultations online or in-person?",
-    answer:
-      "Both can be offered depending on the case. Some conditions require in-clinic diagnostics; others can start with an online consult.",
-  },
-];
-
 export default function DoctorsPage() {
-  // Update these quickly
-  const WHATSAPP_NUMBER = "+0000000000"; // <-- change
-  const PRIMARY_PHONE = "+0000000000"; // <-- change
+  const { doctors, loading } = usePublicSite();
 
-  const allDoctors = Array.isArray(doctors) ? doctors : [];
-  const featuredDoctor = allDoctors[0] || null;
+  // Fallback contact info (can be taken from settings later)
+  const WHATSAPP_NUMBER = "+923477552842";
+  const PRIMARY_PHONE = "+923477552842";
 
-  // ✅ UPDATED theme: light + sky/navy (typography + colors updated)
-  // ✅ Layout + structure kept the same
+  // Theme (unchanged from original)
   const theme = {
     sky: "#0ea5e9",
     skyHover: "#0284c7",
@@ -74,8 +53,6 @@ export default function DoctorsPage() {
       padding: "36px 0",
       position: "relative",
     },
-
-    // ✅ Replaces PageHero (simple header band; not changing rest of page layout)
     topHeader: {
       width: "100%",
       padding: "86px 0 42px",
@@ -83,8 +60,6 @@ export default function DoctorsPage() {
         "linear-gradient(150deg, #e0f2fe 0%, #f0f9ff 40%, #ffffff 100%)",
       borderBottom: `1px solid ${theme.border}`,
     },
-
-    // Featured Doctor Card (same layout; new colors)
     featuredDoctor: {
       display: "grid",
       gridTemplateColumns: "minmax(0, 1fr) auto",
@@ -108,8 +83,6 @@ export default function DoctorsPage() {
       alignContent: "start",
       maxWidth: "360px",
     },
-
-    // Avatars (fallback if no images)
     avatar: {
       display: "grid",
       placeItems: "center",
@@ -120,8 +93,6 @@ export default function DoctorsPage() {
       fontWeight: 800,
       boxShadow: "0 10px 28px rgba(14,165,233,0.28)",
     },
-
-    // Typography (updated)
     h2: {
       margin: 0,
       fontFamily: "'DM Serif Display', serif",
@@ -162,8 +133,6 @@ export default function DoctorsPage() {
       display: "block",
       fontFamily: "'Inter', system-ui, sans-serif",
     },
-
-    // Grids
     doctorGrid: {
       display: "grid",
       gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
@@ -176,8 +145,6 @@ export default function DoctorsPage() {
       gap: "24px",
       alignItems: "start",
     },
-
-    // Generic Card (kept layout; changed colors to light)
     glassCard: {
       padding: "28px",
       borderRadius: theme.radiusLG,
@@ -189,40 +156,6 @@ export default function DoctorsPage() {
     },
   };
 
-  // -------------------------------------------------------
-  // Smart Search & Filter System
-  // -------------------------------------------------------
-  const SPECIALIZATIONS = useMemo(() => {
-    const set = new Set();
-    allDoctors.forEach((d) => {
-      (d.focus || []).forEach((x) => set.add(String(x)));
-      if (d.role) set.add(String(d.role));
-    });
-    ["Cataract", "Retina", "LASIK", "Glaucoma", "Pediatric"].forEach((x) =>
-      set.add(x),
-    );
-    return Array.from(set).slice(0, 18);
-  }, [allDoctors]);
-
-  const EXPERIENCE_OPTIONS = [
-    { label: "Any", value: "any" },
-    { label: "5+ years", value: "5" },
-    { label: "10+ years", value: "10" },
-    { label: "15+ years", value: "15" },
-  ];
-
-  const AVAILABILITY_OPTIONS = [
-    { label: "Any", value: "any" },
-    { label: "Today", value: "today" },
-    { label: "This Week", value: "week" },
-  ];
-
-  const SORT_OPTIONS = [
-    { label: "Most experienced", value: "experience" },
-    { label: "Highest rated", value: "rating" },
-    { label: "Available now", value: "available" },
-  ];
-
   const [query, setQuery] = useState("");
   const [specialization, setSpecialization] = useState("Any");
   const [experienceMin, setExperienceMin] = useState("any");
@@ -230,19 +163,22 @@ export default function DoctorsPage() {
   const [availability, setAvailability] = useState("any");
   const [sort, setSort] = useState("experience");
 
+  // Enrich doctors with default values for missing fields
   const enrichedDoctors = useMemo(() => {
-    return allDoctors.map((d, i) => {
+    return doctors.map((d, i) => {
       const expYears =
         typeof d.experienceYears === "number"
           ? d.experienceYears
-          : typeof d.years === "number"
-            ? d.years
+          : d.experienceYears
+            ? parseInt(d.experienceYears, 10) || 6
             : 6 + ((i * 3) % 14);
 
       const rating =
         typeof d.rating === "number"
           ? d.rating
-          : Math.round((4.6 + (i % 4) * 0.1) * 10) / 10;
+          : d.rating
+            ? parseFloat(d.rating) || 4.5
+            : 4.5;
 
       const availabilityStatus =
         d.availabilityStatus ||
@@ -258,16 +194,17 @@ export default function DoctorsPage() {
 
       return {
         ...d,
-        _id: d.id || `${d.name}-${i}`,
+        _id: d._id || `${d.name}-${i}`,
         experienceYears: expYears,
         rating,
         availabilityStatus,
         specialization: spec,
         gender: d.gender || (i % 2 === 0 ? "Male" : "Female"),
-        photoUrl: d.photoUrl || d.photo || null,
+        photoUrl: d.photo || d.photoUrl || null,
+        initials: d.initials || d.name.slice(0, 2).toUpperCase(),
       };
     });
-  }, [allDoctors]);
+  }, [doctors]);
 
   const filteredDoctors = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -331,9 +268,7 @@ export default function DoctorsPage() {
     sort,
   ]);
 
-  // -------------------------------------------------------
-  // Doctor-to-Service Mapping (simple)
-  // -------------------------------------------------------
+  // Doctor-to-Service Mapping (based on focus/role)
   const serviceToDoctors = useMemo(() => {
     const buckets = {
       LASIK: [],
@@ -363,8 +298,6 @@ export default function DoctorsPage() {
     return buckets;
   }, [enrichedDoctors]);
 
-  // ✅ NEW: detect "filtering mode"
-  // When user searches OR selects any filter (specialization/experience/gender/availability) -> show only the services mapping cards.
   const isFilteringMode = useMemo(() => {
     const hasSearch = query.trim().length > 0;
     const hasSpecialization = specialization !== "Any";
@@ -380,9 +313,7 @@ export default function DoctorsPage() {
     );
   }, [query, specialization, experienceMin, gender, availability]);
 
-  // -------------------------------------------------------
-  // "Find the Right Doctor" Wizard
-  // -------------------------------------------------------
+  // Wizard state
   const [wizardStep, setWizardStep] = useState(1);
   const [wizard, setWizard] = useState({ issue: "", location: "", time: "" });
 
@@ -399,9 +330,7 @@ export default function DoctorsPage() {
     return (pool.length ? pool : enrichedDoctors).slice(0, 1)[0] || null;
   }, [wizard.issue, enrichedDoctors]);
 
-  // -------------------------------------------------------
-  // Smooth scroll anchors
-  // -------------------------------------------------------
+  // Smooth scroll refs
   const refs = {
     featured: useRef(null),
     roster: useRef(null),
@@ -422,6 +351,29 @@ export default function DoctorsPage() {
     const wa = cleaned.startsWith("+") ? cleaned.slice(1) : cleaned;
     return `https://wa.me/${wa}`;
   }, [WHATSAPP_NUMBER]);
+
+  // Featured doctor (first active doctor, or fallback)
+  const featuredDoctor = enrichedDoctors[0] || null;
+
+  if (loading) {
+    return (
+      <main
+        style={{
+          background: theme.bg,
+          color: theme.navy,
+          fontFamily: "'Inter', system-ui, sans-serif",
+          minHeight: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center", padding: "80px 20px" }}>
+          <p>Loading doctors...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main
@@ -471,57 +423,13 @@ export default function DoctorsPage() {
           box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.10);
         }
 
-        .sticky-filter {
-          position: sticky;
-          top: 12px;
-          z-index: 50;
-          border-radius: 22px;
-          border: 1px solid ${theme.border};
-          background: rgba(255,255,255,0.78);
-          backdrop-filter: blur(18px);
-          box-shadow: 0 16px 48px rgba(2, 8, 23, 0.10);
-          padding: 12px;
-        }
-
-        .tabs {
-          display: flex;
-          gap: 10px;
-          overflow: auto;
-          padding-bottom: 6px;
-          scrollbar-width: none;
-        }
-        .tabs::-webkit-scrollbar { display: none; }
-        .tab {
-          flex: 0 0 auto;
-          padding: 10px 14px;
-          border-radius: 999px;
-          border: 1px solid ${theme.border};
-          background: #fff;
-          color: ${theme.navyMid};
-          font-weight: 800;
-          font-size: 0.82rem;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          cursor: pointer;
-          transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
-        }
-        .tab:hover { transform: translateY(-1px); border-color: rgba(14,165,233,0.35); background: ${theme.skyLight}; }
-        .tab-active { border-color: rgba(14,165,233,0.45); background: ${theme.skyLight}; color: ${theme.skyHover}; }
-
+        
         .grid-4 { display: grid; gap: 20px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .grid-3 { display: grid; gap: 20px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .grid-2 { display: grid; gap: 20px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-        .cta-banner { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 34px; border-radius: 36px; background: linear-gradient(135deg, ${theme.navy} 0%, ${theme.navyMid} 100%); border: 1px solid rgba(255,255,255,0.12); box-shadow: ${theme.shadowStrong}; }
-
-        .floating-cta {
-          position: fixed;
-          right: 16px;
-          bottom: 16px;
-          z-index: 60;
-          display: grid;
-          gap: 10px;
-        }
+        
+        
 
         @media (max-width: 1180px) {
           .featured-doctor, .doctor-grid, .dual-panel, .featured-doctor-main, .cta-banner,
@@ -536,149 +444,21 @@ export default function DoctorsPage() {
         }
       `}</style>
 
-      {/* 2. Smart Search & Filter System (Sticky) */}
       <AnimatedSection style={{ ...s.sectionBand, paddingTop: 0 }}>
         <div style={s.sectionShell}>
           <div className="sticky-filter">
-            <div style={{ display: "grid", gap: "10px" }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr",
-                  gap: "10px",
-                }}
-              >
-                <input
-                  className="input"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by name or specialization"
-                  aria-label="Search doctors"
-                />
-              </div>
-
-              {/* ✅ When filtering/searching, hide scroll tabs (since sections are hidden) */}
-              {!isFilteringMode && (
-                <div
-                  className="tabs"
-                  role="tablist"
-                  aria-label="Quick scroll"
-                  style={{ justifyContent: "center", flexWrap: "wrap" }}
-                >
-                  {[
-                    { k: "featured", label: "Featured" },
-                    { k: "roster", label: "All Doctors" },
-                    { k: "wizard", label: "Find Doctor Wizard" },
-                    { k: "mapping", label: "Doctor ↔ Service" },
-                    { k: "faq", label: "FAQ" },
-                  ].map((x) => (
-                    <button
-                      key={x.k}
-                      type="button"
-                      className="tab"
-                      onClick={() => scrollTo(x.k)}
-                    >
-                      {x.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div className="grid-4">
-                <select
-                  className="input"
-                  value={specialization}
-                  onChange={(e) => setSpecialization(e.target.value)}
-                  aria-label="Filter specialization"
-                >
-                  <option value="Any">Specialization (Any)</option>
-                  {SPECIALIZATIONS.map((x) => (
-                    <option key={x} value={x}>
-                      {x}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  className="input"
-                  value={experienceMin}
-                  onChange={(e) => setExperienceMin(e.target.value)}
-                  aria-label="Filter experience"
-                >
-                  {EXPERIENCE_OPTIONS.map((x) => (
-                    <option key={x.value} value={x.value}>
-                      Experience ({x.label})
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  className="input"
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  aria-label="Filter gender"
-                >
-                  <option value="Any">Gender (Any)</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-
-                <select
-                  className="input"
-                  value={availability}
-                  onChange={(e) => setAvailability(e.target.value)}
-                  aria-label="Filter availability"
-                >
-                  {AVAILABILITY_OPTIONS.map((x) => (
-                    <option key={x.value} value={x.value}>
-                      Availability ({x.label})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr auto",
-                  gap: "10px",
-                }}
-              >
-                <select
-                  className="input"
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value)}
-                  aria-label="Sort doctors"
-                >
-                  {SORT_OPTIONS.map((x) => (
-                    <option key={x.value} value={x.value}>
-                      Sort: {x.label}
-                    </option>
-                  ))}
-                </select>
-
-                <button
-                  type="button"
-                  className="button button-ghost"
-                  style={{ minHeight: "50px", padding: "0 16px" }}
-                  onClick={() => {
-                    setQuery("");
-                    setSpecialization("Any");
-                    setExperienceMin("any");
-                    setGender("Any");
-                    setAvailability("any");
-                    setSort("experience");
-                  }}
-                >
-                  Reset
-                </button>
-              </div>
-            </div>
+            <input
+              className="input"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name or specialization"
+              aria-label="Search doctors"
+            />
           </div>
         </div>
       </AnimatedSection>
 
-      {/* ✅ When user searches/filters, show ONLY Doctor ↔ Service Mapping (services cards) */}
+      {/* Filtering Mode: Show only Doctor ↔ Service Mapping */}
       {isFilteringMode ? (
         <AnimatedSection
           style={{
@@ -699,13 +479,9 @@ export default function DoctorsPage() {
 
             <div className="grid-2" style={{ marginTop: 22 }}>
               {Object.entries(serviceToDoctors).map(([service, list]) => {
-                // ✅ Only show doctors that are currently in filteredDoctors
                 const allowed = new Set(filteredDoctors.map((d) => d._id));
                 const filteredList = list.filter((d) => allowed.has(d._id));
-
-                // If nothing matches this service under the current filters -> hide that service card
                 if (filteredList.length === 0) return null;
-
                 return (
                   <article
                     key={service}
@@ -728,17 +504,30 @@ export default function DoctorsPage() {
                             alignItems: "center",
                           }}
                         >
-                          <div
-                            style={{
-                              ...s.avatar,
-                              width: 54,
-                              height: 54,
-                              fontSize: "0.95rem",
-                              borderRadius: 18,
-                            }}
-                          >
-                            {d.initials || "DR"}
-                          </div>
+                          {d.photoUrl ? (
+                            <img
+                              src={d.photoUrl}
+                              alt={d.name}
+                              style={{
+                                width: 54,
+                                height: 54,
+                                borderRadius: 18,
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                ...s.avatar,
+                                width: 54,
+                                height: 54,
+                                fontSize: "0.95rem",
+                                borderRadius: 18,
+                              }}
+                            >
+                              {d.initials || "DR"}
+                            </div>
+                          )}
                           <div>
                             <div style={{ color: theme.navy, fontWeight: 900 }}>
                               {d.name}
@@ -762,7 +551,6 @@ export default function DoctorsPage() {
               })}
             </div>
 
-            {/* If user filters to nothing, show a simple note (no design changes elsewhere) */}
             {filteredDoctors.length === 0 && (
               <div style={{ ...s.glassCard, marginTop: 22 }}>
                 <h3 style={{ ...s.h3, margin: 0 }}>No matches found.</h3>
@@ -776,15 +564,13 @@ export default function DoctorsPage() {
         </AnimatedSection>
       ) : (
         <>
-          {/* 4. Featured / Senior Specialists */}
+          {/* Featured Doctor */}
           <AnimatedSection style={s.sectionBand}>
             <div style={s.sectionShell} ref={refs.featured}>
               {!featuredDoctor ? (
                 <div style={s.glassCard}>
                   <h2 style={s.h2}>No doctors found</h2>
-                  <p style={s.p}>
-                    Add doctors to your siteContent data to populate this page.
-                  </p>
+                  <p style={s.p}>Please add doctors via the admin panel.</p>
                 </div>
               ) : (
                 <div
@@ -871,7 +657,7 @@ export default function DoctorsPage() {
             </div>
           </AnimatedSection>
 
-          {/* 3. Doctor Listing Grid (Primary Content) */}
+          {/* Doctor Listing Grid */}
           <AnimatedSection
             style={{ ...s.sectionBand, backgroundColor: "#ffffff" }}
           >
@@ -975,9 +761,6 @@ export default function DoctorsPage() {
                         marginTop: 16,
                       }}
                     >
-                      <Link className="button button-secondary" to="/doctors">
-                        View Profile
-                      </Link>
                       <Link className="button button-primary" to="/appointment">
                         Book Appointment
                       </Link>
@@ -1000,185 +783,7 @@ export default function DoctorsPage() {
             </div>
           </AnimatedSection>
 
-          {/* 7. Find the Right Doctor Wizard */}
-          <AnimatedSection style={s.sectionBand}>
-            <div style={s.sectionShell} ref={refs.wizard}>
-              <div style={{ maxWidth: 760 }}>
-                <span style={s.eyebrow}>Doctor Wizard</span>
-                <h2 style={s.h2}>Find Doctor in 3 steps.</h2>
-                <p style={s.p}>
-                  High conversion decision support (simple, fast, and clear).
-                </p>
-              </div>
-
-              <div className="grid-2" style={{ marginTop: 22 }}>
-                <div
-                  className="hover-card"
-                  style={{ ...s.glassCard, padding: 22 }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 12,
-                    }}
-                  >
-                    <span style={{ ...s.eyebrow, margin: 0 }}>
-                      Step {wizardStep} / 3
-                    </span>
-                    <button
-                      className="button button-ghost"
-                      type="button"
-                      onClick={() => {
-                        setWizardStep(1);
-                        setWizard({ issue: "", location: "", time: "" });
-                      }}
-                      style={{ minHeight: 44 }}
-                    >
-                      Clear
-                    </button>
-                  </div>
-
-                  {wizardStep === 1 && (
-                    <div style={{ marginTop: 14 }}>
-                      <div style={{ color: theme.navy, fontWeight: 900 }}>
-                        What issue are you facing?
-                      </div>
-                      <select
-                        className="input"
-                        style={{ marginTop: 10 }}
-                        value={wizard.issue}
-                        onChange={(e) =>
-                          setWizard((p) => ({ ...p, issue: e.target.value }))
-                        }
-                      >
-                        <option value="">Choose…</option>
-                        <option value="LASIK">LASIK / Vision correction</option>
-                        <option value="Cataract">Cataract / Lens</option>
-                        <option value="Retina">Retina / Floaters</option>
-                        <option value="Glaucoma">
-                          Glaucoma / Eye pressure
-                        </option>
-                        <option value="Pediatric">
-                          Pediatric / Child vision
-                        </option>
-                        <option value="Checkup">General checkup</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {wizardStep === 2 && (
-                    <div style={{ marginTop: 14 }}>
-                      <div style={{ color: theme.navy, fontWeight: 900 }}>
-                        Preferred location
-                      </div>
-                      <select
-                        className="input"
-                        style={{ marginTop: 10 }}
-                        value={wizard.location}
-                        onChange={(e) =>
-                          setWizard((p) => ({ ...p, location: e.target.value }))
-                        }
-                      >
-                        <option value="">Any location</option>
-                        <option value="Main Clinic">Main Clinic</option>
-                        <option value="Branch 2">Branch 2</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {wizardStep === 3 && (
-                    <div style={{ marginTop: 14 }}>
-                      <div style={{ color: theme.navy, fontWeight: 900 }}>
-                        Preferred time
-                      </div>
-                      <select
-                        className="input"
-                        style={{ marginTop: 10 }}
-                        value={wizard.time}
-                        onChange={(e) =>
-                          setWizard((p) => ({ ...p, time: e.target.value }))
-                        }
-                      >
-                        <option value="">Any time</option>
-                        <option value="Morning">Morning</option>
-                        <option value="Afternoon">Afternoon</option>
-                        <option value="Evening">Evening</option>
-                      </select>
-                    </div>
-                  )}
-
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 10,
-                      flexWrap: "wrap",
-                      marginTop: 18,
-                    }}
-                  >
-                    <button
-                      className="button button-secondary"
-                      type="button"
-                      onClick={() => setWizardStep((x) => Math.max(1, x - 1))}
-                    >
-                      Back
-                    </button>
-                    <button
-                      className="button button-primary"
-                      type="button"
-                      onClick={() => setWizardStep((x) => Math.min(3, x + 1))}
-                      style={{ border: "none" }}
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  className="hover-card"
-                  style={{ ...s.glassCard, padding: 22 }}
-                >
-                  <span style={s.eyebrow}>Recommendation</span>
-                  <h3 style={{ ...s.h3, marginTop: 0 }}>
-                    {wizardRecommendation
-                      ? wizardRecommendation.name
-                      : "Choose an issue to get a recommendation"}
-                  </h3>
-                  <p style={s.p}>
-                    {wizardRecommendation
-                      ? `Best match for: ${wizard.issue}. Experience: ${wizardRecommendation.experienceYears}+ years. Availability: ${wizardRecommendation.availabilityStatus}.`
-                      : "This will recommend a doctor and give you a direct booking route."}
-                  </p>
-
-                  {wizardRecommendation && (
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 10,
-                        flexWrap: "wrap",
-                        marginTop: 16,
-                      }}
-                    >
-                      <Link className="button button-primary" to="/appointment">
-                        Book Now
-                      </Link>
-                      <a
-                        className="button button-secondary"
-                        href={whatsappHref}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        WhatsApp Chat
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </AnimatedSection>
-
-          {/* 6. Doctor-to-Service Mapping */}
+          {/* Doctor-to-Service Mapping (full list) */}
           <AnimatedSection
             style={{ ...s.sectionBand, backgroundColor: "#ffffff" }}
           >
@@ -1214,17 +819,30 @@ export default function DoctorsPage() {
                             alignItems: "center",
                           }}
                         >
-                          <div
-                            style={{
-                              ...s.avatar,
-                              width: 54,
-                              height: 54,
-                              fontSize: "0.95rem",
-                              borderRadius: 18,
-                            }}
-                          >
-                            {d.initials || "DR"}
-                          </div>
+                          {d.photoUrl ? (
+                            <img
+                              src={d.photoUrl}
+                              alt={d.name}
+                              style={{
+                                width: 54,
+                                height: 54,
+                                borderRadius: 18,
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                ...s.avatar,
+                                width: 54,
+                                height: 54,
+                                fontSize: "0.95rem",
+                                borderRadius: 18,
+                              }}
+                            >
+                              {d.initials || "DR"}
+                            </div>
+                          )}
                           <div>
                             <div style={{ color: theme.navy, fontWeight: 900 }}>
                               {d.name}
@@ -1249,7 +867,7 @@ export default function DoctorsPage() {
             </div>
           </AnimatedSection>
 
-          {/* 9. Consultation Options */}
+          {/* Consultation Options */}
           <AnimatedSection style={s.sectionBand}>
             <div style={s.sectionShell} ref={refs.options}>
               <div style={{ maxWidth: 760 }}>
@@ -1298,65 +916,9 @@ export default function DoctorsPage() {
                       >
                         Book
                       </Link>
-                      <a
-                        href={`tel:${PRIMARY_PHONE}`}
-                        className="button button-secondary"
-                        style={{ minHeight: 46 }}
-                      >
-                        Call
-                      </a>
                     </div>
                   </article>
                 ))}
-              </div>
-            </div>
-          </AnimatedSection>
-
-          {/* 11. FAQ Section */}
-          <AnimatedSection style={s.sectionBand}>
-            <div style={s.sectionShell} ref={refs.faq}>
-              <span style={s.eyebrow}>FAQ</span>
-              <h2 style={s.h2}>Doctor-related questions</h2>
-
-              <div className="grid-3" style={{ marginTop: 22 }}>
-                {DOCTOR_FAQ.map((x) => (
-                  <article
-                    key={x.question}
-                    className="hover-card"
-                    style={{ ...s.glassCard, padding: 22 }}
-                  >
-                    <h3 style={{ ...s.h3, marginTop: 0 }}>{x.question}</h3>
-                    <p style={{ ...s.p, marginTop: 10 }}>{x.answer}</p>
-                  </article>
-                ))}
-              </div>
-            </div>
-          </AnimatedSection>
-
-          {/* 13. Final CTA Section */}
-          <AnimatedSection style={{ ...s.sectionBand, marginBottom: "60px" }}>
-            <div style={s.sectionShell} ref={refs.cta}>
-              <div className="cta-banner">
-                <div style={{ maxWidth: "700px" }}>
-                  <span style={s.eyebrow}>Final Step</span>
-                  <h1 style={{ color: "#fff" }}>
-                    Consult with experienced eye specialists today
-                  </h1>
-                  <p style={s.p}>
-                    Book now, chat on WhatsApp, or call for urgent guidance.
-                  </p>
-                </div>
-                <div
-                  style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}
-                  className="cta-actions"
-                >
-                  <Link className="button button-primary" to="/appointment">
-                    Book Now
-                  </Link>
-                  <Link className="button button-secondary" to="/contact">
-                    Contact Us
-                  </Link>
-                </div>
               </div>
             </div>
           </AnimatedSection>

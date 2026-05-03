@@ -3,7 +3,7 @@ import { useAdminAuth } from "../admin/AdminAuthContext";
 import { usePublicSite } from "../hooks/PublicSiteContext";
 
 // ----------------------------------------------------------------------
-// Constants & helpers (unchanged logic)
+// Constants & helpers
 // ----------------------------------------------------------------------
 const sections = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
@@ -11,49 +11,62 @@ const sections = [
   { id: "messages", label: "Messages", icon: "💬" },
   { id: "doctors", label: "Doctors", icon: "👨‍⚕️" },
   { id: "services", label: "Services", icon: "⚙️" },
-  { id: "insights", label: "Insights", icon: "📝" },
+  // { id: "insights", label: "Insights", icon: "📝" },
   { id: "settings", label: "Settings", icon: "🔧" },
 ];
 
 const emptyDoctor = {
   _id: "",
-  active: true,
-  bio: "",
-  displayOrder: 0,
-  education: "",
-  experience: "",
-  featured: false,
-  focus: "",
-  initials: "",
   name: "",
   role: "",
+  specialization: "",
+  focus: "", // CSV string in form
+  bio: "",
+  photo: "",
+  experienceYears: 0,
+  rating: 4.5,
+  availabilityStatus: "",
   schedule: "",
-  slug: "",
+  gender: "Male",
+  initials: "",
+  active: true,
+  displayOrder: 0,
 };
 
 const emptyService = {
   _id: "",
-  accent: "#83efe7",
-  active: true,
-  description: "",
-  displayOrder: 0,
-  featured: false,
-  slug: "",
-  subtitle: "",
   title: "",
+  slug: "",
+  description: "",
+  category: "Vision Correction",
+  featured: false,
+  active: true,
+  displayOrder: 0,
+  tags: "",
+  benefits: "",
+  successRate: "Varies",
+  recovery: "Varies",
+  cost: "Starting from —",
+  overview: "",
+  procedureSteps: "",
+  symptoms: "",
+  risks: "",
+  doctorRoles: "",
   treatments: "",
 };
 
 const emptyInsight = {
   _id: "",
-  category: "",
-  content: "",
-  displayOrder: 0,
-  excerpt: "",
-  featured: false,
-  slug: "",
-  status: "published",
   title: "",
+  slug: "",
+  summary: "",
+  content: "",
+  imageUrl: "",
+  category: "",
+  tags: "",
+  status: "draft",
+  featured: false,
+  displayOrder: 0,
 };
 
 const slugify = (value) =>
@@ -65,24 +78,36 @@ const slugify = (value) =>
 
 const toCsv = (value) =>
   Array.isArray(value) ? value.join(", ") : value || "";
+const fromCsv = (str) =>
+  String(str || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
 const normalizeDoctor = (doctor) => ({
   ...emptyDoctor,
   ...doctor,
   focus: toCsv(doctor.focus),
 });
+
 const normalizeService = (service) => ({
   ...emptyService,
   ...service,
+  tags: toCsv(service.tags),
+  benefits: toCsv(service.benefits),
+  symptoms: toCsv(service.symptoms),
+  doctorRoles: toCsv(service.doctorRoles),
   treatments: toCsv(service.treatments),
 });
+
 const normalizeInsight = (insight) => ({
   ...emptyInsight,
   ...insight,
+  tags: toCsv(insight.tags),
 });
 
 // ----------------------------------------------------------------------
-// Sub‑components (unchanged logic, restyled via CSS classes)
+// Sub‑components
 // ----------------------------------------------------------------------
 function StatusPill({ status }) {
   const label = String(status || "new");
@@ -118,7 +143,6 @@ export default function AdminPanelPage() {
   const { admin, apiFetch, logout } = useAdminAuth();
   const { refreshPublicSite } = usePublicSite();
 
-  // State (identical to previous logic)
   const [activeSection, setActiveSection] = useState("dashboard");
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState("");
@@ -138,29 +162,33 @@ export default function AdminPanelPage() {
   const [quickFilter, setQuickFilter] = useState("");
   const normalizedQuickFilter = quickFilter.trim().toLowerCase();
 
-  // Sidebar collapse for mobile
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const settingsForm = useMemo(
     () =>
       settings || {
         _id: "",
-        aboutHeadline: "",
-        aboutSummary: "",
-        brandName: "",
-        email: "",
-        hours: "",
-        location: "",
-        phone: "",
-        signature: "",
+        clinicName: "",
         tagline: "",
-        whatsapp: "",
+        phone: "",
+        emergencyPhone: "",
+        email: "",
+        address: "",
+        mapEmbedUrl: "",
+        directionsUrl: "",
+        facebook: "",
+        instagram: "",
+        youtube: "",
+        linkedin: "",
+        logoUrl: "",
+        faviconUrl: "",
+        footerCopyright: "",
       },
     [settings],
   );
 
   // --------------------------------------------------------------------
-  // Data fetching & CRUD (all functions remain exactly as before)
+  // Data fetching & CRUD
   // --------------------------------------------------------------------
   const loadAdminData = async () => {
     setLoading(true);
@@ -219,16 +247,17 @@ export default function AdminPanelPage() {
     loadAdminData();
   }, []);
 
-  // Appointment / Message save (unchanged)
+  // Make sure headers are passed correctly so the backend parses req.body!
   const saveAppointment = async (appointment) => {
     const payload = await apiFetch(
       `/api/admin/appointments/${appointment._id}`,
       {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           adminNotes: appointment.adminNotes,
           status: appointment.status,
         }),
-        method: "PATCH",
       },
     );
     setAppointments((current) =>
@@ -236,23 +265,23 @@ export default function AdminPanelPage() {
         item._id === appointment._id ? payload.data : item,
       ),
     );
-    setFeedback(payload.message);
+    setFeedback(payload.message || "Appointment saved.");
     await loadAdminData();
   };
 
   const saveMessage = async (message) => {
     const payload = await apiFetch(`/api/admin/messages/${message._id}`, {
-      body: JSON.stringify({ status: message.status }),
       method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: message.status }),
     });
     setMessages((current) =>
       current.map((item) => (item._id === message._id ? payload.data : item)),
     );
-    setFeedback(payload.message);
+    setFeedback(payload.message || "Message saved.");
     await loadAdminData();
   };
 
-  // Doctor CRUD
   const saveDoctor = async (event) => {
     event.preventDefault();
     const payload = await apiFetch(
@@ -260,15 +289,17 @@ export default function AdminPanelPage() {
         ? `/api/admin/doctors/${doctorForm._id}`
         : "/api/admin/doctors",
       {
+        method: doctorForm._id ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...doctorForm,
-          slug: doctorForm.slug || slugify(doctorForm.name),
+          focus: fromCsv(doctorForm.focus), // Convert string to Array
+          slug: slugify(doctorForm.name),
         }),
-        method: doctorForm._id ? "PUT" : "POST",
       },
     );
     startTransition(() => setDoctorForm(emptyDoctor));
-    setFeedback(payload.message);
+    setFeedback(payload.message || "Doctor saved.");
     await loadAdminData();
     await refreshPublicSite();
   };
@@ -281,7 +312,6 @@ export default function AdminPanelPage() {
     await refreshPublicSite();
   };
 
-  // Service CRUD
   const saveService = async (event) => {
     event.preventDefault();
     const payload = await apiFetch(
@@ -289,15 +319,21 @@ export default function AdminPanelPage() {
         ? `/api/admin/services/${serviceForm._id}`
         : "/api/admin/services",
       {
+        method: serviceForm._id ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...serviceForm,
+          tags: fromCsv(serviceForm.tags),
+          benefits: fromCsv(serviceForm.benefits),
+          symptoms: fromCsv(serviceForm.symptoms),
+          doctorRoles: fromCsv(serviceForm.doctorRoles),
+          treatments: fromCsv(serviceForm.treatments),
           slug: serviceForm.slug || slugify(serviceForm.title),
         }),
-        method: serviceForm._id ? "PUT" : "POST",
       },
     );
     startTransition(() => setServiceForm(emptyService));
-    setFeedback(payload.message);
+    setFeedback(payload.message || "Service saved.");
     await loadAdminData();
     await refreshPublicSite();
   };
@@ -310,7 +346,6 @@ export default function AdminPanelPage() {
     await refreshPublicSite();
   };
 
-  // Insight CRUD
   const saveInsight = async (event) => {
     event.preventDefault();
     const payload = await apiFetch(
@@ -318,15 +353,17 @@ export default function AdminPanelPage() {
         ? `/api/admin/insights/${insightForm._id}`
         : "/api/admin/insights",
       {
+        method: insightForm._id ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...insightForm,
+          tags: fromCsv(insightForm.tags),
           slug: insightForm.slug || slugify(insightForm.title),
         }),
-        method: insightForm._id ? "PUT" : "POST",
       },
     );
     startTransition(() => setInsightForm(emptyInsight));
-    setFeedback(payload.message);
+    setFeedback(payload.message || "Insight saved.");
     await loadAdminData();
     await refreshPublicSite();
   };
@@ -339,23 +376,32 @@ export default function AdminPanelPage() {
     await refreshPublicSite();
   };
 
-  // Settings save
   const saveSettings = async (event) => {
     event.preventDefault();
+    // Guard clause in case _id is empty (no settings document created yet)
+    if (!settingsForm._id) {
+      setFeedback(
+        "Error: Please manually seed the settings document in the database first.",
+      );
+      return;
+    }
     const payload = await apiFetch(`/api/admin/settings/${settingsForm._id}`, {
-      body: JSON.stringify(settingsForm),
       method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settingsForm),
     });
     setSettings(payload.data);
-    setFeedback(payload.message);
+    setFeedback(payload.message || "Settings saved.");
     await refreshPublicSite();
   };
 
-  // Filtered lists (preserves original functionality)
+  // --------------------------------------------------------------------
+  // Filters
+  // --------------------------------------------------------------------
   const filteredAppointments = useMemo(() => {
     if (!normalizedQuickFilter) return appointments;
     return appointments.filter((a) =>
-      `${a.name} ${a.email} ${a.phone} ${a.service} ${a.status}`
+      `${a.fullName} ${a.email} ${a.phone} ${a.serviceLabel} ${a.status}`
         .toLowerCase()
         .includes(normalizedQuickFilter),
     );
@@ -364,7 +410,7 @@ export default function AdminPanelPage() {
   const filteredMessages = useMemo(() => {
     if (!normalizedQuickFilter) return messages;
     return messages.filter((m) =>
-      `${m.name} ${m.email || ""} ${m.phone || ""} ${m.contactMethod} ${m.status}`
+      `${m.name} ${m.email || ""} ${m.phone || ""} ${m.subject} ${m.status}`
         .toLowerCase()
         .includes(normalizedQuickFilter),
     );
@@ -373,7 +419,7 @@ export default function AdminPanelPage() {
   const filteredDoctors = useMemo(() => {
     if (!normalizedQuickFilter) return doctors;
     return doctors.filter((d) =>
-      `${d.name} ${d.role} ${Array.isArray(d.focus) ? d.focus.join(" ") : d.focus || ""}`
+      `${d.name} ${d.role} ${d.specialization}`
         .toLowerCase()
         .includes(normalizedQuickFilter),
     );
@@ -382,9 +428,7 @@ export default function AdminPanelPage() {
   const filteredServices = useMemo(() => {
     if (!normalizedQuickFilter) return services;
     return services.filter((s) =>
-      `${s.title} ${s.subtitle} ${Array.isArray(s.treatments) ? s.treatments.join(" ") : s.treatments || ""}`
-        .toLowerCase()
-        .includes(normalizedQuickFilter),
+      `${s.title} ${s.category}`.toLowerCase().includes(normalizedQuickFilter),
     );
   }, [services, normalizedQuickFilter]);
 
@@ -398,7 +442,7 @@ export default function AdminPanelPage() {
   }, [insights, normalizedQuickFilter]);
 
   // --------------------------------------------------------------------
-  // Section renderers (logic unchanged, wrapped in cleaner layout)
+  // Renderers
   // --------------------------------------------------------------------
   const renderDashboard = () => (
     <div className="admin-section-body">
@@ -440,8 +484,10 @@ export default function AdminPanelPage() {
             dashboard.recentAppointments.map((item) => (
               <article className="admin-list-row" key={item._id}>
                 <div className="admin-list-left">
-                  <strong>{item.name}</strong>
-                  <p>{item.service}</p>
+                  <strong>{item.fullName}</strong>
+                  <p>
+                    {item.serviceLabel} • {item.date}
+                  </p>
                 </div>
                 <StatusPill status={item.status} />
               </article>
@@ -464,7 +510,7 @@ export default function AdminPanelPage() {
               <article className="admin-list-row" key={item._id}>
                 <div className="admin-list-left">
                   <strong>{item.name}</strong>
-                  <p>{item.contactMethod}</p>
+                  <p>{item.subject}</p>
                 </div>
                 <StatusPill status={item.status} />
               </article>
@@ -493,17 +539,25 @@ export default function AdminPanelPage() {
             <div className="admin-record-head">
               <div className="admin-record-ident">
                 <div className="admin-avatar" aria-hidden="true">
-                  {String(appointment.name || "P")
+                  {String(appointment.fullName || "P")
                     .trim()
                     .slice(0, 1)
                     .toUpperCase()}
                 </div>
                 <div>
-                  <h3>{appointment.name}</h3>
+                  <h3>{appointment.fullName}</h3>
                   <p className="admin-muted">
                     {appointment.email} · {appointment.phone}
                   </p>
-                  <p className="admin-muted">{appointment.service}</p>
+                  <p className="admin-muted">
+                    {appointment.serviceLabel} • Mode: {appointment.mode}
+                  </p>
+                  <p
+                    className="admin-muted"
+                    style={{ color: "#0ea5e9", fontWeight: 600 }}
+                  >
+                    {appointment.date} at {appointment.time}
+                  </p>
                 </div>
               </div>
               <div className="admin-record-actions">
@@ -520,9 +574,8 @@ export default function AdminPanelPage() {
                   }
                   value={appointment.status}
                 >
-                  <option value="new">New</option>
-                  <option value="contacted">Contacted</option>
-                  <option value="scheduled">Scheduled</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
                   <option value="completed">Completed</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
@@ -530,13 +583,13 @@ export default function AdminPanelPage() {
             </div>
             <div className="admin-record-body">
               <div className="admin-note-block">
-                <p className="admin-note-title">Patient message</p>
+                <p className="admin-note-title">Patient Notes / Symptoms</p>
                 <p className="admin-note-copy">
-                  {appointment.message || "No message submitted."}
+                  {appointment.notes || "No additional notes provided."}
                 </p>
               </div>
               <div className="admin-note-block">
-                <p className="admin-note-title">Internal notes</p>
+                <p className="admin-note-title">Internal Admin Notes</p>
                 <textarea
                   className="admin-textarea"
                   onChange={(e) =>
@@ -596,7 +649,7 @@ export default function AdminPanelPage() {
                     {message.email || "No email"} ·{" "}
                     {message.phone || "No phone"}
                   </p>
-                  <p className="admin-muted">{message.contactMethod}</p>
+                  <p className="admin-muted">Subject: {message.subject}</p>
                 </div>
               </div>
               <div className="admin-record-actions">
@@ -614,7 +667,7 @@ export default function AdminPanelPage() {
                   value={message.status}
                 >
                   <option value="new">New</option>
-                  <option value="reviewed">Reviewed</option>
+                  <option value="read">Read</option>
                   <option value="resolved">Resolved</option>
                 </select>
               </div>
@@ -630,7 +683,7 @@ export default function AdminPanelPage() {
                   onClick={() => saveMessage(message)}
                   type="button"
                 >
-                  Save message
+                  Save status
                 </button>
               </div>
             </div>
@@ -647,7 +700,7 @@ export default function AdminPanelPage() {
           <div>
             <h3>{doctorForm._id ? "Edit doctor" : "Create doctor"}</h3>
             <p className="admin-muted mb-1">
-              Keep profiles concise and structured for best front-end rendering.
+              Manage doctor profiles and specialties.
             </p>
           </div>
           <button
@@ -666,17 +719,18 @@ export default function AdminPanelPage() {
                 setDoctorForm((c) => ({ ...c, name: e.target.value }))
               }
               value={doctorForm.name}
-              placeholder="Dr. Ayesha Khan"
+              placeholder="Dr. Sarah Ahmed"
+              required
             />
           </label>
           <label className="admin-field">
-            <span>Initials</span>
+            <span>Initials (Fallback Avatar)</span>
             <input
               onChange={(e) =>
                 setDoctorForm((c) => ({ ...c, initials: e.target.value }))
               }
               value={doctorForm.initials}
-              placeholder="AK"
+              placeholder="SA"
             />
           </label>
           <label className="admin-field">
@@ -687,10 +741,35 @@ export default function AdminPanelPage() {
               }
               value={doctorForm.role}
               placeholder="Refractive Surgeon"
+              required
             />
           </label>
           <label className="admin-field">
-            <span>Schedule</span>
+            <span>Specialization</span>
+            <input
+              onChange={(e) =>
+                setDoctorForm((c) => ({ ...c, specialization: e.target.value }))
+              }
+              value={doctorForm.specialization}
+              placeholder="LASIK"
+            />
+          </label>
+          <label className="admin-field">
+            <span>Gender</span>
+            <select
+              className="admin-select"
+              value={doctorForm.gender}
+              onChange={(e) =>
+                setDoctorForm((c) => ({ ...c, gender: e.target.value }))
+              }
+            >
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+          <label className="admin-field">
+            <span>Schedule String</span>
             <input
               onChange={(e) =>
                 setDoctorForm((c) => ({ ...c, schedule: e.target.value }))
@@ -700,33 +779,62 @@ export default function AdminPanelPage() {
             />
           </label>
           <label className="admin-field admin-field-span2">
-            <span>Focus areas</span>
+            <span>Focus Areas (Comma Separated)</span>
             <input
               onChange={(e) =>
                 setDoctorForm((c) => ({ ...c, focus: e.target.value }))
               }
               value={doctorForm.focus}
-              placeholder="LASIK, SMILE, Premium IOL"
+              placeholder="LASIK, SMILE, Cataract"
+            />
+          </label>
+          <label className="admin-field admin-field-span2">
+            <span>Photo URL</span>
+            <input
+              onChange={(e) =>
+                setDoctorForm((c) => ({ ...c, photo: e.target.value }))
+              }
+              value={doctorForm.photo}
+              placeholder="https://..."
             />
           </label>
           <label className="admin-field">
-            <span>Experience</span>
+            <span>Experience Years</span>
             <input
+              type="number"
               onChange={(e) =>
-                setDoctorForm((c) => ({ ...c, experience: e.target.value }))
+                setDoctorForm((c) => ({
+                  ...c,
+                  experienceYears: Number(e.target.value),
+                }))
               }
-              value={doctorForm.experience}
-              placeholder="12+ years"
+              value={doctorForm.experienceYears}
             />
           </label>
           <label className="admin-field">
-            <span>Education</span>
+            <span>Rating (0-5)</span>
+            <input
+              type="number"
+              step="0.1"
+              max="5"
+              min="0"
+              onChange={(e) =>
+                setDoctorForm((c) => ({ ...c, rating: Number(e.target.value) }))
+              }
+              value={doctorForm.rating}
+            />
+          </label>
+          <label className="admin-field admin-field-span2">
+            <span>Availability Status</span>
             <input
               onChange={(e) =>
-                setDoctorForm((c) => ({ ...c, education: e.target.value }))
+                setDoctorForm((c) => ({
+                  ...c,
+                  availabilityStatus: e.target.value,
+                }))
               }
-              value={doctorForm.education}
-              placeholder="FCPS, FRCS"
+              value={doctorForm.availabilityStatus}
+              placeholder="Available today"
             />
           </label>
           <label className="admin-field admin-field-span2">
@@ -737,11 +845,11 @@ export default function AdminPanelPage() {
               }
               rows="5"
               value={doctorForm.bio}
-              placeholder="Short summary shown on the Doctors page…"
+              placeholder="Short summary shown on the profile…"
             />
           </label>
           <label className="admin-field">
-            <span>Display order</span>
+            <span>Display Order</span>
             <input
               type="number"
               onChange={(e) =>
@@ -754,16 +862,6 @@ export default function AdminPanelPage() {
             />
           </label>
           <div className="admin-inline-checks">
-            <label>
-              <input
-                type="checkbox"
-                checked={doctorForm.featured}
-                onChange={(e) =>
-                  setDoctorForm((c) => ({ ...c, featured: e.target.checked }))
-                }
-              />{" "}
-              Featured
-            </label>
             <label>
               <input
                 type="checkbox"
@@ -783,14 +881,11 @@ export default function AdminPanelPage() {
       <div className="admin-list-card">
         <div className="admin-list-head">
           <h3>Doctors</h3>
-          <p className="admin-muted mb-1">
-            Click edit to load a profile into the editor.
-          </p>
         </div>
         {!filteredDoctors.length ? (
           <EmptyState
             title="No matching doctors"
-            copy="Try a different search keyword in the top bar."
+            copy="Try a different search keyword."
           />
         ) : (
           filteredDoctors.map((doctor) => (
@@ -800,7 +895,9 @@ export default function AdminPanelPage() {
             >
               <div className="admin-list-left">
                 <strong>{doctor.name}</strong>
-                <p>{doctor.role}</p>
+                <p>
+                  {doctor.role} • {doctor.specialization}
+                </p>
               </div>
               <div className="admin-row-actions">
                 <button
@@ -830,71 +927,161 @@ export default function AdminPanelPage() {
           <div>
             <h3>{serviceForm._id ? "Edit service" : "Create service"}</h3>
             <p className="admin-muted mb-1">
-              Titles and subtitles appear in service cards across the public
-              site.
+              Service cards details and expanded overviews.
             </p>
           </div>
           <button
             className="admin-btn admin-btn-ghost admin-btn-sm"
             onClick={() => setServiceForm(emptyService)}
+            type="button"
           >
             New
           </button>
         </div>
         <div className="admin-form-grid">
-          <label className="admin-field admin-field-span2">
+          <label className="admin-field">
             <span>Title</span>
             <input
               onChange={(e) =>
                 setServiceForm((c) => ({ ...c, title: e.target.value }))
               }
               value={serviceForm.title}
-              placeholder="Cataract Surgery"
-            />
-          </label>
-          <label className="admin-field admin-field-span2">
-            <span>Subtitle</span>
-            <input
-              onChange={(e) =>
-                setServiceForm((c) => ({ ...c, subtitle: e.target.value }))
-              }
-              value={serviceForm.subtitle}
-              placeholder="Premium lenses, precision planning"
+              placeholder="LASIK Surgery"
+              required
             />
           </label>
           <label className="admin-field">
-            <span>Accent</span>
-            <input
+            <span>Category</span>
+            <select
+              className="admin-select"
+              value={serviceForm.category}
               onChange={(e) =>
-                setServiceForm((c) => ({ ...c, accent: e.target.value }))
+                setServiceForm((c) => ({ ...c, category: e.target.value }))
               }
-              value={serviceForm.accent}
-              placeholder="#0ea5e9"
-            />
+            >
+              <option value="Vision Correction">Vision Correction</option>
+              <option value="Surgical Procedures">Surgical Procedures</option>
+              <option value="Eye Diseases">Eye Diseases</option>
+              <option value="Pediatric Care">Pediatric Care</option>
+              <option value="General Eye Checkup">General Eye Checkup</option>
+            </select>
           </label>
           <label className="admin-field admin-field-span2">
-            <span>Treatments</span>
-            <input
-              onChange={(e) =>
-                setServiceForm((c) => ({ ...c, treatments: e.target.value }))
-              }
-              value={serviceForm.treatments}
-              placeholder="Comprehensive Exams, Risk Detection"
-            />
-          </label>
-          <label className="admin-field admin-field-span2">
-            <span>Description</span>
+            <span>Short Description</span>
             <textarea
               onChange={(e) =>
                 setServiceForm((c) => ({ ...c, description: e.target.value }))
               }
-              rows="5"
+              rows="2"
               value={serviceForm.description}
-              placeholder="Short, patient-friendly description…"
+              required
             />
           </label>
           <label className="admin-field">
-            <span>Display order</span>
+            <span>Success Rate</span>
+            <input
+              onChange={(e) =>
+                setServiceForm((c) => ({ ...c, successRate: e.target.value }))
+              }
+              value={serviceForm.successRate}
+            />
+          </label>
+          <label className="admin-field">
+            <span>Recovery Time</span>
+            <input
+              onChange={(e) =>
+                setServiceForm((c) => ({ ...c, recovery: e.target.value }))
+              }
+              value={serviceForm.recovery}
+            />
+          </label>
+          <label className="admin-field">
+            <span>Cost Estimate</span>
+            <input
+              onChange={(e) =>
+                setServiceForm((c) => ({ ...c, cost: e.target.value }))
+              }
+              value={serviceForm.cost}
+            />
+          </label>
+          <label className="admin-field">
+            <span>Tags (CSV)</span>
+            <input
+              onChange={(e) =>
+                setServiceForm((c) => ({ ...c, tags: e.target.value }))
+              }
+              value={serviceForm.tags}
+              placeholder="Popular, Advanced"
+            />
+          </label>
+
+          <label className="admin-field admin-field-span2">
+            <span>Benefits (CSV)</span>
+            <input
+              onChange={(e) =>
+                setServiceForm((c) => ({ ...c, benefits: e.target.value }))
+              }
+              value={serviceForm.benefits}
+              placeholder="Painless, Quick recovery..."
+            />
+          </label>
+          <label className="admin-field admin-field-span2">
+            <span>Symptoms Treated (CSV)</span>
+            <input
+              onChange={(e) =>
+                setServiceForm((c) => ({ ...c, symptoms: e.target.value }))
+              }
+              value={serviceForm.symptoms}
+              placeholder="Blurry vision, Glare..."
+            />
+          </label>
+          <label className="admin-field admin-field-span2">
+            <span>Related Doctor Roles (CSV)</span>
+            <input
+              onChange={(e) =>
+                setServiceForm((c) => ({ ...c, doctorRoles: e.target.value }))
+              }
+              value={serviceForm.doctorRoles}
+              placeholder="Refractive Surgeon, Specialist"
+            />
+          </label>
+
+          <label className="admin-field admin-field-span2">
+            <span>Detailed Overview</span>
+            <textarea
+              onChange={(e) =>
+                setServiceForm((c) => ({ ...c, overview: e.target.value }))
+              }
+              rows="4"
+              value={serviceForm.overview}
+            />
+          </label>
+          <label className="admin-field admin-field-span2">
+            <span>Procedure Steps</span>
+            <textarea
+              onChange={(e) =>
+                setServiceForm((c) => ({
+                  ...c,
+                  procedureSteps: e.target.value,
+                }))
+              }
+              rows="3"
+              value={serviceForm.procedureSteps}
+            />
+          </label>
+          <label className="admin-field admin-field-span2">
+            <span>Potential Risks</span>
+            <textarea
+              onChange={(e) =>
+                setServiceForm((c) => ({ ...c, risks: e.target.value }))
+              }
+              rows="3"
+              value={serviceForm.risks}
+            />
+          </label>
+
+          <label className="admin-field">
+            <span>Display Order</span>
             <input
               type="number"
               onChange={(e) =>
@@ -936,14 +1123,11 @@ export default function AdminPanelPage() {
       <div className="admin-list-card">
         <div className="admin-list-head">
           <h3>Services</h3>
-          <p className="admin-muted mb-1">
-            Keep display order low for top placement on the homepage.
-          </p>
         </div>
         {!filteredServices.length ? (
           <EmptyState
             title="No matching services"
-            copy="Try a different search keyword in the top bar."
+            copy="Try a different search keyword."
           />
         ) : (
           filteredServices.map((service) => (
@@ -953,7 +1137,7 @@ export default function AdminPanelPage() {
             >
               <div className="admin-list-left">
                 <strong>{service.title}</strong>
-                <p>{service.subtitle}</p>
+                <p>{service.category}</p>
               </div>
               <div className="admin-row-actions">
                 <button
@@ -983,12 +1167,13 @@ export default function AdminPanelPage() {
           <div>
             <h3>{insightForm._id ? "Edit insight" : "Create insight"}</h3>
             <p className="admin-muted mb-1">
-              Educational articles and blog posts for the public site.
+              Educational articles and blog posts.
             </p>
           </div>
           <button
             className="admin-btn admin-btn-ghost admin-btn-sm"
             onClick={() => setInsightForm(emptyInsight)}
+            type="button"
           >
             New
           </button>
@@ -1002,6 +1187,7 @@ export default function AdminPanelPage() {
               }
               value={insightForm.title}
               placeholder="Understanding Cataracts"
+              required
             />
           </label>
           <label className="admin-field">
@@ -1025,16 +1211,37 @@ export default function AdminPanelPage() {
             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
+              <option value="archived">Archived</option>
             </select>
           </label>
           <label className="admin-field admin-field-span2">
-            <span>Excerpt</span>
+            <span>Tags (CSV)</span>
+            <input
+              onChange={(e) =>
+                setInsightForm((c) => ({ ...c, tags: e.target.value }))
+              }
+              value={insightForm.tags}
+              placeholder="LASIK, Surgery, Eyes"
+            />
+          </label>
+          <label className="admin-field admin-field-span2">
+            <span>Image URL</span>
+            <input
+              onChange={(e) =>
+                setInsightForm((c) => ({ ...c, imageUrl: e.target.value }))
+              }
+              value={insightForm.imageUrl}
+              placeholder="https://..."
+            />
+          </label>
+          <label className="admin-field admin-field-span2">
+            <span>Summary</span>
             <textarea
               onChange={(e) =>
-                setInsightForm((c) => ({ ...c, excerpt: e.target.value }))
+                setInsightForm((c) => ({ ...c, summary: e.target.value }))
               }
               rows="3"
-              value={insightForm.excerpt}
+              value={insightForm.summary}
               placeholder="Short summary for cards…"
             />
           </label>
@@ -1048,10 +1255,11 @@ export default function AdminPanelPage() {
               rows="10"
               value={insightForm.content}
               placeholder="Full article content…"
+              required
             />
           </label>
           <label className="admin-field">
-            <span>Display order</span>
+            <span>Display Order</span>
             <input
               type="number"
               onChange={(e) =>
@@ -1083,9 +1291,6 @@ export default function AdminPanelPage() {
       <div className="admin-list-card">
         <div className="admin-list-head">
           <h3>Insights</h3>
-          <p className="admin-muted mb-1">
-            Manage blog posts and news articles.
-          </p>
         </div>
         {!filteredInsights.length ? (
           <EmptyState
@@ -1138,13 +1343,22 @@ export default function AdminPanelPage() {
           </p>
         </div>
         <div className="admin-form-grid">
-          <label className="admin-field admin-field-span2">
-            <span>Brand Name</span>
+          <label className="admin-field">
+            <span>Clinic Name</span>
             <input
               onChange={(e) =>
-                setSettings({ ...settingsForm, brandName: e.target.value })
+                setSettings({ ...settingsForm, clinicName: e.target.value })
               }
-              value={settingsForm.brandName}
+              value={settingsForm.clinicName}
+            />
+          </label>
+          <label className="admin-field">
+            <span>Tagline</span>
+            <input
+              onChange={(e) =>
+                setSettings({ ...settingsForm, tagline: e.target.value })
+              }
+              value={settingsForm.tagline}
             />
           </label>
           <label className="admin-field">
@@ -1157,6 +1371,15 @@ export default function AdminPanelPage() {
             />
           </label>
           <label className="admin-field">
+            <span>Emergency Phone</span>
+            <input
+              onChange={(e) =>
+                setSettings({ ...settingsForm, emergencyPhone: e.target.value })
+              }
+              value={settingsForm.emergencyPhone}
+            />
+          </label>
+          <label className="admin-field admin-field-span2">
             <span>Email</span>
             <input
               onChange={(e) =>
@@ -1165,68 +1388,97 @@ export default function AdminPanelPage() {
               value={settingsForm.email}
             />
           </label>
+          <label className="admin-field admin-field-span2">
+            <span>Address</span>
+            <input
+              onChange={(e) =>
+                setSettings({ ...settingsForm, address: e.target.value })
+              }
+              value={settingsForm.address}
+            />
+          </label>
+          <label className="admin-field admin-field-span2">
+            <span>Google Maps Embed URL (iframe src)</span>
+            <input
+              onChange={(e) =>
+                setSettings({ ...settingsForm, mapEmbedUrl: e.target.value })
+              }
+              value={settingsForm.mapEmbedUrl}
+            />
+          </label>
+          <label className="admin-field admin-field-span2">
+            <span>Directions URL (Map Link)</span>
+            <input
+              onChange={(e) =>
+                setSettings({ ...settingsForm, directionsUrl: e.target.value })
+              }
+              value={settingsForm.directionsUrl}
+            />
+          </label>
           <label className="admin-field">
-            <span>WhatsApp</span>
+            <span>Facebook URL</span>
             <input
               onChange={(e) =>
-                setSettings({ ...settingsForm, whatsapp: e.target.value })
+                setSettings({ ...settingsForm, facebook: e.target.value })
               }
-              value={settingsForm.whatsapp}
+              value={settingsForm.facebook}
             />
           </label>
           <label className="admin-field">
-            <span>Location</span>
+            <span>Instagram URL</span>
             <input
               onChange={(e) =>
-                setSettings({ ...settingsForm, location: e.target.value })
+                setSettings({ ...settingsForm, instagram: e.target.value })
               }
-              value={settingsForm.location}
+              value={settingsForm.instagram}
             />
           </label>
           <label className="admin-field">
-            <span>Hours</span>
+            <span>YouTube URL</span>
             <input
               onChange={(e) =>
-                setSettings({ ...settingsForm, hours: e.target.value })
+                setSettings({ ...settingsForm, youtube: e.target.value })
               }
-              value={settingsForm.hours}
+              value={settingsForm.youtube}
+            />
+          </label>
+          <label className="admin-field">
+            <span>LinkedIn URL</span>
+            <input
+              onChange={(e) =>
+                setSettings({ ...settingsForm, linkedin: e.target.value })
+              }
+              value={settingsForm.linkedin}
+            />
+          </label>
+          <label className="admin-field">
+            <span>Logo URL</span>
+            <input
+              onChange={(e) =>
+                setSettings({ ...settingsForm, logoUrl: e.target.value })
+              }
+              value={settingsForm.logoUrl}
+            />
+          </label>
+          <label className="admin-field">
+            <span>Favicon URL</span>
+            <input
+              onChange={(e) =>
+                setSettings({ ...settingsForm, faviconUrl: e.target.value })
+              }
+              value={settingsForm.faviconUrl}
             />
           </label>
           <label className="admin-field admin-field-span2">
-            <span>Tagline</span>
+            <span>Footer Copyright text</span>
             <input
               onChange={(e) =>
-                setSettings({ ...settingsForm, tagline: e.target.value })
+                setSettings({
+                  ...settingsForm,
+                  footerCopyright: e.target.value,
+                })
               }
-              value={settingsForm.tagline}
-            />
-          </label>
-          <label className="admin-field admin-field-span2">
-            <span>About Headline</span>
-            <input
-              onChange={(e) =>
-                setSettings({ ...settingsForm, aboutHeadline: e.target.value })
-              }
-              value={settingsForm.aboutHeadline}
-            />
-          </label>
-          <label className="admin-field admin-field-span2">
-            <span>About Summary</span>
-            <textarea
-              rows="4"
-              onChange={(e) =>
-                setSettings({ ...settingsForm, aboutSummary: e.target.value })
-              }
-              value={settingsForm.aboutSummary}
-            />
-          </label>
-          <label className="admin-field admin-field-span2">
-            <span>Signature</span>
-            <input
-              onChange={(e) =>
-                setSettings({ ...settingsForm, signature: e.target.value })
-              }
-              value={settingsForm.signature}
+              value={settingsForm.footerCopyright}
             />
           </label>
         </div>
@@ -1238,15 +1490,13 @@ export default function AdminPanelPage() {
   );
 
   // --------------------------------------------------------------------
-  // Main return – white professional layout with animations
+  // Main return
   // --------------------------------------------------------------------
   return (
     <>
-      {/* Global styles for this admin panel */}
       <style>{adminPanelCSS}</style>
 
       <div className="admin-root">
-        {/* Sidebar overlay for mobile */}
         {sidebarOpen && (
           <div
             className="admin-overlay"
@@ -1302,7 +1552,7 @@ export default function AdminPanelPage() {
               <span />
               <span />
             </button>
-            <div className="admin-search-area">
+            {/* <div className="admin-search-area">
               <input
                 className="admin-search-input"
                 type="text"
@@ -1310,7 +1560,7 @@ export default function AdminPanelPage() {
                 value={quickFilter}
                 onChange={(e) => setQuickFilter(e.target.value)}
               />
-            </div>
+            </div> */}
             {feedback && (
               <div className="admin-feedback" onClick={() => setFeedback("")}>
                 {feedback} ✕
@@ -1346,122 +1596,31 @@ export default function AdminPanelPage() {
 }
 
 // ----------------------------------------------------------------------
-// CSS (white background, professional design, animations, responsiveness)
+// CSS
 // ----------------------------------------------------------------------
 const adminPanelCSS = `
 /* ===== BASE ===== */
-.admin-root {
-  display: flex;
-  min-height: 100vh;
-  background: #f8fafc;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  color: #1e293b;
-}
-
-/* ===== SIDEBAR ===== */
-.admin-sidebar {
-  width: 260px;
-  background: #ffffff;
-  border-right: 1px solid #e2e8f0;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.3s ease;
-  z-index: 20;
-  box-shadow: 0 0 20px rgba(0,0,0,0.02);
-}
-.admin-sidebar-header {
-  padding: 24px 20px 16px;
-  border-bottom: 1px solid #f1f5f9;
-}
-.admin-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+.admin-root { display: flex; min-height: 100vh; background: #f8fafc; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293b; }
+.admin-sidebar { width: 260px; background: #ffffff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; transition: transform 0.3s ease; z-index: 20; box-shadow: 0 0 20px rgba(0,0,0,0.02); }
+.admin-sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid #f1f5f9; }
+.admin-logo { display: flex; align-items: center; gap: 10px; }
 .admin-logo-icon { font-size: 28px; }
-.admin-logo-text {
-  font-size: 22px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #0f172a 0%, #475569 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.admin-nav {
-  flex: 1;
-  padding: 12px 12px;
-  overflow-y: auto;
-}
-.admin-nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 10px 16px;
-  margin-bottom: 4px;
-  border: none;
-  background: transparent;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #475569;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-.admin-nav-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-.admin-nav-btn--active {
-  background: #0f172a;
-  color: #ffffff;
-}
+.admin-logo-text { font-size: 22px; font-weight: 700; background: linear-gradient(135deg, #0f172a 0%, #475569 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.admin-nav { flex: 1; padding: 12px 12px; overflow-y: auto; }
+.admin-nav-btn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 16px; margin-bottom: 4px; border: none; background: transparent; border-radius: 12px; font-size: 14px; font-weight: 600; color: #475569; transition: all 0.2s; cursor: pointer; }
+.admin-nav-btn:hover { background: #f1f5f9; color: #0f172a; }
+.admin-nav-btn--active { background: #0f172a; color: #ffffff; }
 .admin-nav-btn--active .admin-nav-icon { filter: brightness(0) invert(1); }
 .admin-nav-icon { font-size: 18px; width: 24px; text-align: center; }
-.admin-sidebar-footer {
-  padding: 16px 20px;
-  border-top: 1px solid #f1f5f9;
-}
-.admin-user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.admin-user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #0f172a;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 14px;
-}
+.admin-sidebar-footer { padding: 16px 20px; border-top: 1px solid #f1f5f9; }
+.admin-user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.admin-user-avatar { width: 36px; height: 36px; border-radius: 10px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
 .admin-user-name { font-weight: 600; font-size: 13px; }
-.admin-logout-btn {
-  width: 100%;
-  justify-content: center;
-  border: 1px solid #e2e8f0;
-  color: #ef4444;
-}
+.admin-logout-btn { width: 100%; justify-content: center; border: 1px solid #e2e8f0; color: #ef4444; }
 
-/* Mobile sidebar overlay & toggle */
-.admin-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
-  z-index: 10;
-  backdrop-filter: blur(2px);
-}
+.admin-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 10; backdrop-filter: blur(2px); }
 @media (max-width: 768px) {
-  .admin-sidebar {
-    position: fixed;
-    top: 0; left: 0;
-    height: 100%;
-    transform: translateX(-100%);
-  }
+  .admin-sidebar { position: fixed; top: 0; left: 0; height: 100%; transform: translateX(-100%); }
   .admin-sidebar--open { transform: translateX(0); }
   .admin-hamburger { display: flex !important; }
   .admin-search-area { margin-left: 0 !important; }
@@ -1471,188 +1630,89 @@ const adminPanelCSS = `
 }
 
 /* ===== MAIN AREA ===== */
-.admin-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.admin-topbar {
-  padding: 16px 24px;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.admin-hamburger {
-  display: none;
-  flex-direction: column;
-  gap: 5px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-}
-.admin-hamburger span {
-  display: block;
-  width: 22px;
-  height: 2px;
-  background: #1e293b;
-  border-radius: 2px;
-  transition: 0.2s;
-}
+.admin-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.admin-topbar { padding: 16px 24px; background: #ffffff; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.admin-hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; }
+.admin-hamburger span { display: block; width: 22px; height: 2px; background: #1e293b; border-radius: 2px; transition: 0.2s; }
 .admin-search-area { margin-left: auto; }
-.admin-search-input {
-  padding: 8px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #f8fafc;
-  font-size: 13px;
-  width: 220px;
-  transition: 0.2s;
-}
+/* Force text to black inside search */
+.admin-search-input { color: #000000; padding: 8px 16px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 13px; width: 220px; transition: 0.2s; }
 .admin-search-input:focus { border-color: #94a3b8; background: white; outline: none; }
-.admin-feedback {
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  color: #0369a1;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  cursor: pointer;
-}
+.admin-feedback { background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; }
 
-/* Content transitions */
 .admin-content { flex: 1; padding: 32px; overflow-y: auto; }
-.admin-section-fade {
-  animation: fadeSlideIn 0.3s ease;
-}
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+.admin-section-fade { animation: fadeSlideIn 0.3s ease; }
+@keyframes fadeSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .admin-section-header { margin-bottom: 24px; }
-.admin-section-title {
-  font-size: 26px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
+.admin-section-title { font-size: 26px; font-weight: 700; color: #0f172a; margin: 0; }
 
 /* ===== CARDS & GRIDS ===== */
-.admin-stat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
-}
-.admin-stat-card {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.admin-stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
+.admin-stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-bottom: 32px; }
+.admin-stat-card { background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06); transition: transform 0.2s, box-shadow 0.2s; }
+.admin-stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 .admin-stat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .admin-stat-label { color: #64748b; font-size: 13px; font-weight: 600; margin: 0; }
 .admin-stat-meta { font-size: 11px; color: #94a3b8; background: #f1f5f9; padding: 2px 8px; border-radius: 20px; }
 .admin-stat-value { font-size: 32px; font-weight: 700; }
 .admin-stat-spark { margin-top: 12px; height: 4px; background: linear-gradient(90deg, #0f172a20, #0f172a); border-radius: 2px; }
 
-.admin-two-column {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-.admin-panel-card {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
+.admin-two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.admin-panel-card { background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
 .admin-panel-head { margin-bottom: 16px; }
 .admin-panel-head h3 { margin: 0 0 4px; font-size: 18px; }
 .admin-panel-sub { font-size: 12px; color: #94a3b8; }
 
 /* ===== RECORD CARDS ===== */
-.admin-record-card {
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 20px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-  transition: box-shadow 0.2s;
-}
+.admin-record-card { background: #ffffff; border-radius: 14px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); transition: box-shadow 0.2s; }
 .admin-record-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
 .admin-record-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
 .admin-record-ident { display: flex; gap: 14px; align-items: center; }
-.admin-avatar {
-  width: 44px; height: 44px; border-radius: 12px; background: #0f172a; color: white;
-  display: flex; align-items: center; justify-content: center; font-weight: 700;
-}
+.admin-avatar { width: 44px; height: 44px; border-radius: 12px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; }
 .admin-avatar-soft { background: #e2e8f0; color: #1e293b; }
 .admin-record-ident h3 { margin: 0; font-size: 16px; }
 .admin-muted { color: #64748b; font-size: 13px; margin: 4px 0 0; }
-.admin-record-actions select {
-  padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: white;
-}
+.admin-select { color: #000000; padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; font-size:13px; }
 .admin-record-body { margin-top: 16px; }
 .admin-note-block { margin-bottom: 12px; }
 .admin-note-title { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin: 0 0 6px; }
-.admin-note-copy { font-size: 14px; color: #334155; line-height: 1.5; }
-.admin-textarea {
-  width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; resize: vertical;
-  font-size: 14px; background: #f8fafc; transition: 0.2s;
-}
+.admin-note-copy { font-size: 14px; color: #000000; line-height: 1.5; }
+.admin-textarea { color: #000000; width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; resize: vertical; font-size: 14px; background: #f8fafc; transition: 0.2s; }
 .admin-textarea:focus { background: white; border-color: #94a3b8; outline: none; }
+.admin-textarea-lg { color: #000000; width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; resize: vertical; font-size: 14px; background: #f8fafc; transition: 0.2s; }
+.admin-textarea-lg:focus { background: white; border-color: #94a3b8; outline: none; }
 .admin-row-cta { text-align: right; }
 
 /* ===== FORMS & EDITOR ===== */
 .admin-editor-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
-.admin-form-card {
-  background: #ffffff; border-radius: 16px; padding: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
+.admin-form-card { background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
 .admin-form-card--single { max-width: 700px; }
 .admin-form-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
 .admin-form-head h3 { margin: 0; }
-.admin-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.admin-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
 .admin-field { display: flex; flex-direction: column; gap: 4px; }
 .admin-field span { font-size: 13px; font-weight: 600; color: #475569; }
-.admin-field input, .admin-field textarea {
-  padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc;
-  font-size: 14px; transition: 0.2s;
+
+/* Force input and textarea text color to pure black (#000000) */
+.admin-field input, .admin-field textarea, .admin-field select { 
+  color: #000000; 
+  padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; font-size: 14px; transition: 0.2s; 
 }
-.admin-field input:focus, .admin-field textarea:focus { background: white; border-color: #0f172a; outline: none; }
+.admin-field input::placeholder, .admin-field textarea::placeholder { color: #94a3b8; }
+.admin-field input:focus, .admin-field textarea:focus, .admin-field select:focus { background: white; border-color: #0f172a; outline: none; }
 .admin-field-span2 { grid-column: span 2; }
 .admin-inline-checks { display: flex; gap: 20px; align-items: center; }
-.admin-inline-checks label { font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.admin-inline-checks label { font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; color: #000000; }
 
-.admin-list-card {
-  background: #ffffff; border-radius: 16px; padding: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow-y: auto;
-}
+.admin-list-card { background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow-y: auto; max-height: calc(100vh - 140px); }
 .admin-list-head { margin-bottom: 16px; }
-.admin-list-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 0; border-bottom: 1px solid #f1f5f9;
-}
+.admin-list-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
 .admin-list-row:last-child { border-bottom: none; }
-.admin-list-left strong { font-size: 15px; }
+.admin-list-left strong { font-size: 15px; color: #000000;}
 .admin-list-left p { margin: 2px 0 0; font-size: 13px; color: #64748b; }
 .admin-row-actions { display: flex; gap: 8px; }
 
 /* ===== BUTTONS ===== */
-.admin-btn {
-  padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
-  border: none; cursor: pointer; transition: all 0.2s;
-}
+.admin-btn { padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
 .admin-btn-primary { background: #0f172a; color: white; }
 .admin-btn-primary:hover { background: #1e293b; box-shadow: 0 4px 12px rgba(15,23,42,0.2); }
 .admin-btn-secondary { background: #f1f5f9; color: #1e293b; }
@@ -1664,39 +1724,28 @@ const adminPanelCSS = `
 .admin-btn-sm { padding: 6px 14px; font-size: 12px; border-radius: 8px; }
 
 /* ===== STATUS PILLS ===== */
-.admin-status {
-  display: inline-block; padding: 4px 12px; border-radius: 20px;
-  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-}
-.admin-status-new { background: #e0f2fe; color: #0369a1; }
-.admin-status-contacted { background: #fef3c7; color: #b45309; }
-.admin-status-scheduled { background: #dbeafe; color: #1e40af; }
+.admin-status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.admin-status-pending { background: #fef3c7; color: #b45309; }
+.admin-status-confirmed { background: #dbeafe; color: #1e40af; }
 .admin-status-completed { background: #dcfce7; color: #16a34a; }
 .admin-status-cancelled { background: #fee2e2; color: #b91c1c; }
-.admin-status-reviewed { background: #f3e8ff; color: #7e22ce; }
+.admin-status-new { background: #e0f2fe; color: #0369a1; }
+.admin-status-read { background: #f3e8ff; color: #7e22ce; }
 .admin-status-resolved { background: #dcfce7; color: #16a34a; }
 .admin-status-published { background: #dcfce7; color: #16a34a; }
 .admin-status-draft { background: #f1f5f9; color: #64748b; }
+.admin-status-archived { background: #fee2e2; color: #b91c1c; }
 
 /* ===== UTILS ===== */
 .admin-empty { text-align: center; padding: 40px 20px; color: #94a3b8; }
 .admin-empty h3 { margin: 0 0 8px; font-size: 18px; color: #64748b; }
 .mb-1 { margin-bottom: 8px; }
 .admin-loader { display: flex; justify-content: center; padding: 80px 20px; font-size: 18px; color: #94a3b8; }
-
-/* ===== ANIMATIONS (additional) ===== */
 .admin-nav-btn { position: relative; overflow: hidden; }
-.admin-nav-btn::after {
-  content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 2px;
-  background: #0f172a; transition: all 0.3s; transform: translateX(-50%);
-}
+.admin-nav-btn::after { content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 2px; background: #0f172a; transition: all 0.3s; transform: translateX(-50%); }
 .admin-nav-btn:hover::after { width: 80%; }
 .admin-nav-btn--active::after { width: 80%; background: white; }
-
-/* Smooth checkbox toggle */
 input[type="checkbox"] { accent-color: #0f172a; width: 16px; height: 16px; }
-
-/* Scrollbar */
 .admin-sidebar::-webkit-scrollbar { width: 6px; }
 .admin-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 `;

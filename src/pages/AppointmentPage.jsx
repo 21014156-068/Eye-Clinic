@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AnimatedSection } from "../components/AnimatedSection";
-import { FaqAccordion } from "../components/FaqAccordion";
-import { appointmentPage, brand, doctors } from "../data/siteContent";
+import { usePublicSite } from "../hooks/PublicSiteContext";
 
 const appointmentFaq = [
   {
@@ -12,28 +11,28 @@ const appointmentFaq = [
   },
   {
     question: "Can I reschedule or cancel?",
-    answer:
-      "Yes. After confirming, you can use the Manage Booking link. In the future, this can be OTP-based for secure access.",
+    answer: "Yes. After confirming, you can use the Manage Booking link.",
   },
   {
     question: "What should I bring for my appointment?",
     answer:
       "Bring your current glasses, previous reports if any, a list of medications, and your insurance information (if applicable).",
   },
-  {
-    question: "Can this connect to a MERN backend later?",
-    answer:
-      "Yes. The booking payload already matches what a backend needs (service, doctor, slot, patient info, notes, and status).",
-  },
 ];
 
 export default function AppointmentPage() {
-  // Update these quickly
-  const WHATSAPP_NUMBER = "+0000000000"; // <-- change
-  const PRIMARY_PHONE = brand?.phone || "+0000000000"; // <-- change if needed
+  // 1. Pull dynamic data from the database
+  const {
+    settings,
+    doctors: dbDoctors,
+    services: dbServices,
+  } = usePublicSite();
 
-  // ✅ UPDATED THEME: light + sky/navy, smooth typography
-  // ✅ Layout and structure kept the same (no sections removed/added)
+  // 2. Map dynamic settings
+  const PRIMARY_PHONE = settings?.phone || "+92377552842";
+  const WHATSAPP_NUMBER = settings?.whatsapp || PRIMARY_PHONE;
+  const CLINIC_EMAIL = settings?.email || "hello@eyecon.com";
+
   const theme = {
     sky: "#0ea5e9",
     skyHover: "#0284c7",
@@ -61,7 +60,6 @@ export default function AppointmentPage() {
       color: theme.navy,
       fontFamily: "'Inter', system-ui, sans-serif",
     },
-
     sectionBand: { width: "100%", padding: "28px 0" },
     sectionShell: {
       width: theme.containerWide,
@@ -70,8 +68,6 @@ export default function AppointmentPage() {
       padding: "36px 0",
     },
     sectionHead: { maxWidth: "760px" },
-
-    // Grids
     dualPanel: {
       display: "grid",
       gap: "24px",
@@ -96,8 +92,6 @@ export default function AppointmentPage() {
       marginTop: "22px",
       gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     },
-
-    // Cards (light)
     card: {
       position: "relative",
       overflow: "hidden",
@@ -114,8 +108,6 @@ export default function AppointmentPage() {
       border: `1px solid rgba(255,255,255,0.12)`,
       boxShadow: "0 30px 90px rgba(2,8,23,0.22)",
     },
-
-    // Typography & UI (updated)
     h2: {
       margin: 0,
       fontFamily: "'DM Serif Display', serif",
@@ -177,13 +169,20 @@ export default function AppointmentPage() {
   };
 
   // -------------------------------------------------------
-  // Step-based booking engine
+  // Dynamic Services Array
   // -------------------------------------------------------
+  const dynamicServices =
+    dbServices && dbServices.length > 0
+      ? dbServices.map((s) => ({ id: s.slug, label: s.title }))
+      : [
+          { id: "cataract", label: "Cataract" },
+          { id: "lasik", label: "LASIK" },
+          { id: "retina", label: "Retina" },
+          { id: "checkup", label: "General Checkup" },
+        ];
+
   const SERVICES = [
-    { id: "cataract", label: "Cataract" },
-    { id: "lasik", label: "LASIK" },
-    { id: "retina", label: "Retina" },
-    { id: "checkup", label: "General Checkup" },
+    ...dynamicServices,
     { id: "unsure", label: "I’m not sure" },
   ];
 
@@ -214,11 +213,9 @@ export default function AppointmentPage() {
     "United",
   ];
 
-  const allDoctors = Array.isArray(doctors) ? doctors : [];
+  const allDoctors = Array.isArray(dbDoctors) ? dbDoctors : [];
 
-  // Step state
   const [step, setStep] = useState(1);
-
   const [booking, setBooking] = useState({
     serviceId: "",
     serviceLabel: "",
@@ -234,18 +231,15 @@ export default function AppointmentPage() {
     notes: "",
   });
 
-  // Optional: quick booking widget
   const [quick, setQuick] = useState({
     name: "",
     phone: "",
     preferredDate: "",
   });
   const [quickSent, setQuickSent] = useState(false);
-
-  // Confirmation system
   const [confirmed, setConfirmed] = useState(false);
 
-  // “Not sure” auto-suggest: map to checkup (or could open wizard later)
+  // “Not sure” auto-suggest map to checkup
   useEffect(() => {
     if (booking.serviceId === "unsure") {
       setBooking((p) => ({
@@ -259,49 +253,33 @@ export default function AppointmentPage() {
   const serviceLabel = useMemo(() => {
     if (booking.serviceLabel) return booking.serviceLabel;
     return SERVICES.find((s) => s.id === booking.serviceId)?.label || "";
-  }, [booking.serviceId, booking.serviceLabel]);
+  }, [booking.serviceId, booking.serviceLabel, SERVICES]);
 
-  // Filter doctors by service (best-effort keyword matching using role/focus fields)
+  // Filter dynamic DB doctors
   const doctorsForService = useMemo(() => {
     if (!booking.serviceId) return allDoctors;
 
-    const key =
-      booking.serviceId === "lasik"
-        ? "lasik"
-        : booking.serviceId === "cataract"
-          ? "cataract"
-          : booking.serviceId === "retina"
-            ? "retina"
-            : booking.serviceId === "checkup"
-              ? "oph"
-              : "";
-
     const matched = allDoctors.filter((d) => {
+      const focusCsv = Array.isArray(d.focus)
+        ? d.focus.join(" ")
+        : String(d.focus || "");
       const hay =
-        `${d.role || ""} ${(d.focus || []).join(" ")} ${d.bio || ""}`.toLowerCase();
-      if (!key) return true;
-      if (key === "oph") return true;
+        `${d.role || ""} ${d.specialization || ""} ${focusCsv} ${d.bio || ""}`.toLowerCase();
+      const key = booking.serviceId.toLowerCase();
+
+      if (key === "checkup" || key === "unsure") return true;
       return hay.includes(key) || hay.includes("refr") || hay.includes("surg");
     });
 
     return (matched.length ? matched : allDoctors).map((d, idx) => ({
       ...d,
-      _id: d.id || `${d.name}-${idx}`,
-      experienceYears:
-        typeof d.experienceYears === "number"
-          ? d.experienceYears
-          : 6 + ((idx * 3) % 14),
-      rating:
-        typeof d.rating === "number"
-          ? d.rating
-          : Math.round((4.6 + (idx % 4) * 0.1) * 10) / 10,
-      photoUrl: d.photoUrl || d.photo || null,
+      _id: d._id || `${d.name}-${idx}`,
+      experienceYears: d.experienceYears || 6 + ((idx * 3) % 14),
+      rating: d.rating || Math.round((4.6 + (idx % 4) * 0.1) * 10) / 10,
+      photoUrl: d.photo || null,
     }));
   }, [allDoctors, booking.serviceId]);
 
-  // -------------------------------------------------------
-  // Calendar + time slots (frontend simulated “real-time”)
-  // -------------------------------------------------------
   const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const next7Days = useMemo(() => {
     const out = [];
@@ -327,16 +305,12 @@ export default function AppointmentPage() {
     return { slots, remaining, nextAvailable: slots[0]?.time || null, isToday };
   }, [booking.date, todayISO]);
 
-  // Auto-select earliest date if user reaches step 3
   useEffect(() => {
     if (step === 3 && !booking.date) {
       setBooking((p) => ({ ...p, date: next7Days[0] }));
     }
   }, [step, booking.date, next7Days]);
 
-  // -------------------------------------------------------
-  // Progress helpers
-  // -------------------------------------------------------
   const totalSteps = 5;
   const progressPct = Math.round((step / totalSteps) * 100);
 
@@ -351,18 +325,79 @@ export default function AppointmentPage() {
   const next = () => setStep((x) => Math.min(totalSteps, x + 1));
   const back = () => setStep((x) => Math.max(1, x - 1));
 
-  const confirm = () => {
-    setConfirmed(true);
+  // -------------------------------------------------------
+  // Submit Full Booking to DB
+  // -------------------------------------------------------
+  const confirm = async () => {
+    try {
+      const response = await fetch("/api/public/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: booking.fullName,
+          phone: booking.phone,
+          email: booking.email,
+          notes: booking.notes,
+          serviceId: booking.serviceId,
+          serviceLabel: booking.serviceLabel,
+          doctorId: booking.doctorId,
+          doctorName: booking.doctorName,
+          doctorRole: booking.doctorRole,
+          mode: booking.mode,
+          date: booking.date,
+          time: booking.time,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to book appointment");
+      setConfirmed(true);
+    } catch (error) {
+      console.error(error);
+      alert(
+        "Error booking appointment. Please try calling the clinic directly.",
+      );
+    }
   };
 
   // -------------------------------------------------------
-  // Quick booking + assistance
+  // Submit Quick Booking to DB
   // -------------------------------------------------------
-  const onQuickSubmit = (e) => {
+  const onQuickSubmit = async (e) => {
     e.preventDefault();
-    setQuickSent(true);
-    setTimeout(() => setQuickSent(false), 2000);
-    setQuick({ name: "", phone: "", preferredDate: "" });
+    if (!quick.name || !quick.phone) {
+      alert("Please provide both name and phone number.");
+      return;
+    }
+
+    try {
+      // Create a default 'appointment' for quick callbacks so admins see it in the dashboard
+      const dateToUse =
+        quick.preferredDate || new Date().toISOString().slice(0, 10);
+      const response = await fetch("/api/public/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: quick.name,
+          phone: quick.phone,
+          email: "",
+          notes: "QUICK BOOKING CALLBACK REQUEST",
+          serviceId: "quick_booking",
+          serviceLabel: "Quick Booking Request",
+          mode: "in_clinic",
+          date: dateToUse,
+          time: "09:00", // Default placeholder time
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to submit quick booking");
+
+      setQuickSent(true);
+      setTimeout(() => setQuickSent(false), 3000);
+      setQuick({ name: "", phone: "", preferredDate: "" });
+    } catch (error) {
+      console.error(error);
+      alert("Error requesting callback. Please try calling us.");
+    }
   };
 
   const whatsappHref = useMemo(() => {
@@ -371,61 +406,17 @@ export default function AppointmentPage() {
     return `https://wa.me/${wa}`;
   }, [WHATSAPP_NUMBER]);
 
-  const consultationFee = appointmentPage?.fee || "Starting from —";
-  const trustStats = appointmentPage?.trust || {
-    patients: "25k+",
-    rating: "4.9/5",
-    reviews: "1,200+",
-  };
-
   return (
     <main style={s.main} className="page-shell-appointment">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap');
-
         .hover-card { transition: transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease; }
-        .hover-card:hover {
-          transform: translateY(-8px);
-          border-color: rgba(14,165,233,0.35) !important;
-          box-shadow: 0 18px 50px rgba(2,8,23,0.14) !important;
-        }
-        .hover-card::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background: linear-gradient(115deg, transparent 10%, rgba(14,165,233,0.10) 50%, transparent 90%);
-          transform: translateX(-120%);
-          transition: transform 780ms ease;
-        }
+        .hover-card:hover { transform: translateY(-8px); border-color: rgba(14,165,233,0.35) !important; box-shadow: 0 18px 50px rgba(2,8,23,0.14) !important; }
+        .hover-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 10%, rgba(14,165,233,0.10) 50%, transparent 90%); transform: translateX(-120%); transition: transform 780ms ease; }
         .hover-card:hover::before { transform: translateX(120%); }
-
-        .button {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 54px;
-          padding: 0 24px;
-          border-radius: 999px;
-          font-weight: 700;
-          text-decoration: none;
-          overflow: hidden;
-          transition: transform 220ms ease, background 220ms ease, box-shadow 220ms ease;
-          white-space: nowrap;
-          border: 1px solid transparent;
-          cursor: pointer;
-          font-family: 'Inter', system-ui;
-        }
+        .button { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 54px; padding: 0 24px; border-radius: 999px; font-weight: 700; text-decoration: none; overflow: hidden; transition: transform 220ms ease, background 220ms ease, box-shadow 220ms ease; white-space: nowrap; border: 1px solid transparent; cursor: pointer; font-family: 'Inter', system-ui; }
         .button:hover { transform: translateY(-2px); }
-        .button::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.18), transparent);
-          transform: translateX(-120%);
-          transition: transform 420ms ease;
-        }
+        .button::after { content: ""; position: absolute; inset: 0; background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.18), transparent); transform: translateX(-120%); transition: transform 420ms ease; }
         .button:hover::after { transform: translateX(120%); }
         .button-primary { color: #fff; background: ${theme.sky}; box-shadow: 0 8px 24px rgba(14,165,233,0.32); }
         .button-primary:hover { background: ${theme.skyHover}; box-shadow: 0 12px 32px rgba(14,165,233,0.40); }
@@ -435,74 +426,14 @@ export default function AppointmentPage() {
         .button-ghost:hover { background: #fff; }
         .button-danger { color: #b91c1c; border: 1.5px solid rgba(239,68,68,0.25); background: rgba(239,68,68,0.10); }
         .button-danger:hover { background: rgba(239,68,68,0.14); }
-
-        .input {
-          width: 100%;
-          min-height: 50px;
-          border-radius: 14px;
-          border: 1.5px solid ${theme.border};
-          background: #fff;
-          color: ${theme.navy};
-          padding: 0 14px;
-          outline: none;
-          font-family: 'Inter', system-ui;
-        }
-        .input:focus {
-          border-color: ${theme.sky};
-          box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.10);
-        }
-
-        .progress-wrap {
-          border: 1px solid ${theme.border};
-          border-radius: 18px;
-          background: rgba(255,255,255,0.78);
-          overflow: hidden;
-        }
-        .progress-bar {
-          height: 10px;
-          width: 0%;
-          background: linear-gradient(90deg, ${theme.sky}, ${theme.skyMid});
-          transition: width 320ms ease;
-        }
-
-        .stepper {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-          align-items: center;
-          justify-content: space-between;
-        }
-        .step-chip {
-          padding: 8px 12px;
-          border-radius: 999px;
-          border: 1px solid ${theme.border};
-          background: ${theme.borderLight};
-          color: ${theme.navyMid};
-          font-weight: 900;
-          font-size: 0.78rem;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
-        .step-chip-active {
-          border-color: rgba(14,165,233,0.30);
-          background: ${theme.skyLight};
-          color: ${theme.skyHover};
-        }
-
-        .floating-cta {
-          position: fixed;
-          right: 16px;
-          bottom: 16px;
-          z-index: 60;
-          display: grid;
-          gap: 10px;
-        }
-
-        @media (max-width: 1180px) {
-          .form-layout, .grid-3, .grid-2 { grid-template-columns: 1fr !important; }
-          .floating-cta { left: 16px; right: 16px; }
-          .floating-cta .button { width: 100%; }
-        }
+        .input { width: 100%; min-height: 50px; border-radius: 14px; border: 1.5px solid ${theme.border}; background: #fff; color: ${theme.navy}; padding: 0 14px; outline: none; font-family: 'Inter', system-ui; }
+        .input:focus { border-color: ${theme.sky}; box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.10); }
+        .progress-wrap { border: 1px solid ${theme.border}; border-radius: 18px; background: rgba(255,255,255,0.78); overflow: hidden; }
+        .progress-bar { height: 10px; width: 0%; background: linear-gradient(90deg, ${theme.sky}, ${theme.skyMid}); transition: width 320ms ease; }
+        .stepper { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+        .step-chip { padding: 8px 12px; border-radius: 999px; border: 1px solid ${theme.border}; background: ${theme.borderLight}; color: ${theme.navyMid}; font-weight: 900; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; }
+        .step-chip-active { border-color: rgba(14,165,233,0.30); background: ${theme.skyLight}; color: ${theme.skyHover}; }
+        @media (max-width: 1180px) { .form-layout, .grid-3, .grid-2 { grid-template-columns: 1fr !important; } }
       `}</style>
 
       {/* Step-Based Booking System */}
@@ -626,7 +557,6 @@ export default function AppointmentPage() {
                       </button>
                     ))}
                   </div>
-
                   <div
                     style={{
                       display: "flex",
@@ -662,7 +592,7 @@ export default function AppointmentPage() {
                   </p>
 
                   <div style={s.grid3} className="grid-3">
-                    {doctorsForService.slice(0, 6).map((d, idx) => (
+                    {doctorsForService.map((d) => (
                       <article
                         key={d._id}
                         className="hover-card"
@@ -705,7 +635,6 @@ export default function AppointmentPage() {
                               {d.initials || "DR"}
                             </div>
                           )}
-
                           <div
                             style={{
                               display: "grid",
@@ -740,7 +669,6 @@ export default function AppointmentPage() {
                         >
                           {d.name}
                         </div>
-
                         <div
                           style={{
                             display: "flex",
@@ -749,13 +677,14 @@ export default function AppointmentPage() {
                             marginTop: 12,
                           }}
                         >
-                          {(d.focus || []).slice(0, 2).map((x) => (
-                            <span key={x} style={s.tag}>
-                              {x}
-                            </span>
-                          ))}
+                          {(Array.isArray(d.focus) ? d.focus : [])
+                            .slice(0, 2)
+                            .map((x) => (
+                              <span key={x} style={s.tag}>
+                                {x}
+                              </span>
+                            ))}
                         </div>
-
                         <div
                           style={{
                             display: "flex",
@@ -780,13 +709,6 @@ export default function AppointmentPage() {
                           >
                             Select Doctor
                           </button>
-                          <Link
-                            className="button button-secondary"
-                            style={{ minHeight: 46 }}
-                            to="/doctors"
-                          >
-                            View Profile
-                          </Link>
                         </div>
                       </article>
                     ))}
@@ -817,7 +739,6 @@ export default function AppointmentPage() {
                   <h3 style={{ ...s.h3, marginTop: 0 }}>
                     Step 3: Select date & time
                   </h3>
-
                   <div style={s.grid2} className="grid-2">
                     <article
                       className="hover-card"
@@ -869,7 +790,6 @@ export default function AppointmentPage() {
                           ? `Only ${slotsForSelection.remaining} slots left today.`
                           : "Pick a time that works for you."}
                       </p>
-
                       <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
                         {slotsForSelection.slots.map((slot) => (
                           <button
@@ -903,7 +823,6 @@ export default function AppointmentPage() {
                       </div>
                     </article>
                   </div>
-
                   <div
                     style={{
                       display: "flex",
@@ -938,7 +857,6 @@ export default function AppointmentPage() {
                   <h3 style={{ ...s.h3, marginTop: 0 }}>
                     Step 4: Patient information
                   </h3>
-
                   <div style={s.grid2} className="grid-2">
                     <article
                       className="hover-card"
@@ -974,7 +892,6 @@ export default function AppointmentPage() {
                         />
                       </div>
                     </article>
-
                     <article
                       className="hover-card"
                       style={{ ...s.card, padding: 18 }}
@@ -996,7 +913,6 @@ export default function AppointmentPage() {
                           setBooking((p) => ({ ...p, notes: e.target.value }))
                         }
                       />
-
                       <div
                         style={{
                           marginTop: 14,
@@ -1016,7 +932,6 @@ export default function AppointmentPage() {
                       </div>
                     </article>
                   </div>
-
                   <div style={{ marginTop: 16 }}>
                     <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                       {CONSULTATION_OPTIONS.map((opt) => (
@@ -1045,7 +960,6 @@ export default function AppointmentPage() {
                       ))}
                     </div>
                   </div>
-
                   <div
                     style={{
                       display: "flex",
@@ -1080,7 +994,6 @@ export default function AppointmentPage() {
                   <h3 style={{ ...s.h3, marginTop: 0 }}>
                     Step 5: Confirmation
                   </h3>
-
                   <div style={s.grid2} className="grid-2">
                     <article
                       className="hover-card"
@@ -1114,7 +1027,6 @@ export default function AppointmentPage() {
                           </div>
                         ))}
                       </div>
-
                       <div
                         style={{
                           display: "flex",
@@ -1162,8 +1074,8 @@ export default function AppointmentPage() {
                               lineHeight: 1.7,
                             }}
                           >
-                            Instant confirmation shown. (Next: trigger SMS /
-                            WhatsApp / email when backend is connected.)
+                            Your appointment request has been submitted
+                            successfully to our clinic.
                           </div>
                           <div
                             style={{
@@ -1184,7 +1096,7 @@ export default function AppointmentPage() {
                             </a>
                             <a
                               className="button button-ghost"
-                              href={`mailto:${brand?.email || ""}`}
+                              href={`mailto:${CLINIC_EMAIL}`}
                               style={{ minHeight: 46 }}
                             >
                               Email confirmation
@@ -1194,7 +1106,6 @@ export default function AppointmentPage() {
                       )}
                     </article>
 
-                    {/* Smart Assistance Panel + fee/insurance/trust */}
                     <article
                       className="hover-card"
                       style={{ ...s.card, padding: 18 }}
@@ -1206,7 +1117,6 @@ export default function AppointmentPage() {
                         Chat with assistant, call the clinic, or use WhatsApp
                         for quick help.
                       </p>
-
                       <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
                         <a
                           className="button button-secondary"
@@ -1222,27 +1132,15 @@ export default function AppointmentPage() {
                         >
                           Call clinic
                         </a>
-                        <Link className="button button-ghost" to="/insights">
-                          Read a guide first
-                        </Link>
                       </div>
 
                       <div
                         style={{
-                          marginTop: 18,
+                          marginTop: 14,
                           paddingTop: 14,
                           borderTop: `1px solid ${theme.border}`,
                         }}
                       >
-                        <div style={{ color: theme.navy, fontWeight: 900 }}>
-                          Consultation fee
-                        </div>
-                        <p style={{ ...s.p, marginTop: 8 }}>
-                          {consultationFee}
-                        </p>
-                      </div>
-
-                      <div style={{ marginTop: 14 }}>
                         <div style={{ color: theme.navy, fontWeight: 900 }}>
                           Insurance support
                         </div>
@@ -1263,59 +1161,6 @@ export default function AppointmentPage() {
                             </span>
                           ))}
                         </div>
-                        <p
-                          style={{ ...s.p, marginTop: 10, fontSize: "0.95rem" }}
-                        >
-                          Coverage depends on plan & service. We confirm before
-                          final booking.
-                        </p>
-                      </div>
-
-                      <div
-                        style={{
-                          marginTop: 14,
-                          paddingTop: 14,
-                          borderTop: `1px solid ${theme.border}`,
-                        }}
-                      >
-                        <div style={{ color: theme.navy, fontWeight: 900 }}>
-                          Patient trust
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: 10,
-                            flexWrap: "wrap",
-                            marginTop: 10,
-                          }}
-                        >
-                          <span style={s.tag}>
-                            Trusted by {trustStats.patients}
-                          </span>
-                          <span style={s.tag}>Rating {trustStats.rating}</span>
-                          <span style={s.tag}>
-                            {trustStats.reviews} reviews
-                          </span>
-                        </div>
-                      </div>
-
-                      <div
-                        style={{
-                          marginTop: 14,
-                          paddingTop: 14,
-                          borderTop: `1px solid ${theme.border}`,
-                        }}
-                      >
-                        <div style={{ color: theme.navy, fontWeight: 900 }}>
-                          Manage booking
-                        </div>
-                        <p style={{ ...s.p, marginTop: 8 }}>
-                          Reschedule or cancel your appointment (OTP-based flow
-                          can be added later).
-                        </p>
-                        <Link className="button button-ghost" to="/contact">
-                          Manage Booking
-                        </Link>
                       </div>
                     </article>
                   </div>
@@ -1354,6 +1199,7 @@ export default function AppointmentPage() {
                 onChange={(e) =>
                   setQuick((p) => ({ ...p, name: e.target.value }))
                 }
+                required
               />
               <input
                 className="input"
@@ -1362,6 +1208,7 @@ export default function AppointmentPage() {
                 onChange={(e) =>
                   setQuick((p) => ({ ...p, phone: e.target.value }))
                 }
+                required
               />
               <input
                 className="input"
@@ -1382,56 +1229,6 @@ export default function AppointmentPage() {
             <p style={{ ...s.p, marginTop: 10, fontSize: "0.95rem" }}>
               We’ll confirm your preferred time based on availability.
             </p>
-          </div>
-        </div>
-      </AnimatedSection>
-
-      {/* Final CTA */}
-      <AnimatedSection style={{ ...s.sectionBand, marginBottom: 60 }}>
-        <div style={s.sectionShell}>
-          <div
-            className="hover-card"
-            style={{ ...s.card, ...s.featureHeroCard }}
-          >
-            <p
-              style={{
-                ...s.eyebrow,
-                background: "rgba(255,255,255,0.12)",
-                borderColor: "rgba(255,255,255,0.18)",
-                color: theme.skyLight,
-              }}
-            >
-              Final CTA
-            </p>
-            <h2 style={{ ...s.h2, fontSize: "2.8rem", color: "#fff" }}>
-              Your vision deserves expert care
-            </h2>
-            <p style={{ ...s.p, color: "rgba(255,255,255,0.75)" }}>
-              Choose a service and secure the next available slot.
-            </p>
-            <div
-              style={{
-                display: "flex",
-                gap: 14,
-                flexWrap: "wrap",
-                marginTop: 18,
-              }}
-            >
-              <button
-                className="button button-primary"
-                type="button"
-                onClick={() => setStep(1)}
-                style={{ border: "none" }}
-              >
-                Book Appointment
-              </button>
-              <a
-                className="button button-secondary"
-                href={`tel:${PRIMARY_PHONE}`}
-              >
-                Call Clinic
-              </a>
-            </div>
           </div>
         </div>
       </AnimatedSection>

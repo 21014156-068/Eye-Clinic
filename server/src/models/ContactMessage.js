@@ -2,36 +2,29 @@ import mongoose from "mongoose";
 
 const contactMessageSchema = new mongoose.Schema(
   {
-    contactMethod: {
+    name: { type: String, required: true, trim: true }, // Maps to frontend 'fullName'
+    phone: { type: String, required: true, trim: true },
+    email: { type: String, trim: true, lowercase: true },
+
+    // Maps to frontend 'subject' dropdown
+    subject: {
       type: String,
-      trim: true,
-      default: "Phone",
-    },
-    email: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      default: "",
-    },
-    message: {
-      type: String,
-      trim: true,
       required: true,
+      enum: [
+        "General Inquiry",
+        "Appointment Support",
+        "Emergency",
+        "Billing / Insurance",
+      ],
     },
-    name: {
-      type: String,
-      trim: true,
-      required: true,
-    },
-    phone: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+
+    message: { type: String, required: true, trim: true },
+
+    // Admin dashboard tracking
     status: {
       type: String,
+      enum: ["new", "read", "resolved"],
       default: "new",
-      enum: ["new", "reviewed", "resolved"],
     },
   },
   {
@@ -39,5 +32,7 @@ const contactMessageSchema = new mongoose.Schema(
   },
 );
 
-export const ContactMessage = mongoose.model("ContactMessage", contactMessageSchema);
-
+export const ContactMessage = mongoose.model(
+  "ContactMessage",
+  contactMessageSchema,
+);

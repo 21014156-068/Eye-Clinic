@@ -50,18 +50,24 @@ function normalizeList(value) {
 
 router.post("/auth/login", async (request, response, next) => {
   try {
-    const email = String(request.body.email || "").trim().toLowerCase();
+    const email = String(request.body.email || "")
+      .trim()
+      .toLowerCase();
     const password = String(request.body.password || "");
     const admin = await AdminUser.findOne({ email });
 
     if (!admin) {
-      return response.status(401).json({ message: "Invalid admin credentials." });
+      return response
+        .status(401)
+        .json({ message: "Invalid admin credentials." });
     }
 
     const passwordMatches = await bcrypt.compare(password, admin.passwordHash);
 
     if (!passwordMatches) {
-      return response.status(401).json({ message: "Invalid admin credentials." });
+      return response
+        .status(401)
+        .json({ message: "Invalid admin credentials." });
     }
 
     admin.lastLoginAt = new Date();
@@ -91,16 +97,23 @@ router.get("/auth/me", async (request, response) => {
 
 router.get("/dashboard", async (_request, response, next) => {
   try {
-    const [appointmentsCount, messagesCount, doctorsCount, servicesCount, insightsCount, recentAppointments, recentMessages] =
-      await Promise.all([
-        Appointment.countDocuments(),
-        ContactMessage.countDocuments(),
-        Doctor.countDocuments(),
-        Service.countDocuments(),
-        Insight.countDocuments(),
-        Appointment.find().sort({ createdAt: -1 }).limit(5).lean(),
-        ContactMessage.find().sort({ createdAt: -1 }).limit(5).lean(),
-      ]);
+    const [
+      appointmentsCount,
+      messagesCount,
+      doctorsCount,
+      servicesCount,
+      insightsCount,
+      recentAppointments,
+      recentMessages,
+    ] = await Promise.all([
+      Appointment.countDocuments(),
+      ContactMessage.countDocuments(),
+      Doctor.countDocuments(),
+      Service.countDocuments(),
+      Insight.countDocuments(),
+      Appointment.find().sort({ createdAt: -1 }).limit(5).lean(),
+      ContactMessage.find().sort({ createdAt: -1 }).limit(5).lean(),
+    ]);
 
     response.json({
       data: {
@@ -120,27 +133,50 @@ router.get("/dashboard", async (_request, response, next) => {
   }
 });
 
+// GET: Admin gets all appointments, sorted by nearest date first
 router.get("/appointments", async (_request, response, next) => {
   try {
-    const appointments = await Appointment.find().sort({ createdAt: -1 }).lean();
+    const appointments = await Appointment.find()
+      .sort({ appointmentDateTime: 1 }) // 1 = nearest dates show up first
+      .lean();
+
     response.json({ data: appointments });
   } catch (error) {
     next(error);
   }
 });
 
+// PATCH: Admin updates status (e.g. pending -> confirmed -> completed)
 router.patch("/appointments/:id", async (request, response, next) => {
   try {
     const appointment = await Appointment.findByIdAndUpdate(
       request.params.id,
       {
         adminNotes: request.body.adminNotes ?? "",
-        status: request.body.status,
+        status: request.body.status, // Admin sets to 'confirmed'
       },
       { new: true, runValidators: true },
     ).lean();
 
-    response.json({ data: appointment, message: "Appointment updated successfully." });
+    response.json({
+      data: appointment,
+      message: "Appointment status updated successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE: Admin manually deletes an appointment
+router.delete("/appointments/:id", async (request, response, next) => {
+  try {
+    const appointment = await Appointment.findByIdAndDelete(request.params.id);
+
+    if (!appointment) {
+      return response.status(404).json({ message: "Appointment not found." });
+    }
+
+    response.json({ message: "Appointment deleted successfully." });
   } catch (error) {
     next(error);
   }
@@ -173,7 +209,9 @@ router.patch("/messages/:id", async (request, response, next) => {
 
 router.get("/doctors", async (_request, response, next) => {
   try {
-    const doctors = await Doctor.find().sort({ displayOrder: 1, name: 1 }).lean();
+    const doctors = await Doctor.find()
+      .sort({ displayOrder: 1, name: 1 })
+      .lean();
     response.json({ data: doctors });
   } catch (error) {
     next(error);
@@ -187,7 +225,9 @@ router.post("/doctors", async (request, response, next) => {
       focus: normalizeList(request.body.focus),
     });
 
-    response.status(201).json({ data: doctor, message: "Doctor created successfully." });
+    response
+      .status(201)
+      .json({ data: doctor, message: "Doctor created successfully." });
   } catch (error) {
     next(error);
   }
@@ -221,7 +261,9 @@ router.delete("/doctors/:id", async (request, response, next) => {
 
 router.get("/services", async (_request, response, next) => {
   try {
-    const services = await Service.find().sort({ displayOrder: 1, title: 1 }).lean();
+    const services = await Service.find()
+      .sort({ displayOrder: 1, title: 1 })
+      .lean();
     response.json({ data: services });
   } catch (error) {
     next(error);
@@ -233,9 +275,20 @@ router.post("/services", async (request, response, next) => {
     const service = await Service.create({
       ...request.body,
       treatments: normalizeList(request.body.treatments),
+      tags: normalizeList(request.body.tags),
+      benefits: normalizeList(request.body.benefits),
+      symptoms: normalizeList(request.body.symptoms),
+      doctorRoles: normalizeList(request.body.doctorRoles),
+      // If faqs are sent as a JSON string from frontend, parse them. Otherwise just pass them.
+      faqs:
+        typeof request.body.faqs === "string"
+          ? JSON.parse(request.body.faqs)
+          : request.body.faqs,
     });
 
-    response.status(201).json({ data: service, message: "Service created successfully." });
+    response
+      .status(201)
+      .json({ data: service, message: "Service created successfully." });
   } catch (error) {
     next(error);
   }
@@ -248,6 +301,14 @@ router.put("/services/:id", async (request, response, next) => {
       {
         ...request.body,
         treatments: normalizeList(request.body.treatments),
+        tags: normalizeList(request.body.tags),
+        benefits: normalizeList(request.body.benefits),
+        symptoms: normalizeList(request.body.symptoms),
+        doctorRoles: normalizeList(request.body.doctorRoles),
+        faqs:
+          typeof request.body.faqs === "string"
+            ? JSON.parse(request.body.faqs)
+            : request.body.faqs,
       },
       { new: true, runValidators: true },
     ).lean();
@@ -267,54 +328,6 @@ router.delete("/services/:id", async (request, response, next) => {
   }
 });
 
-router.get("/insights", async (_request, response, next) => {
-  try {
-    const insights = await Insight.find().sort({ displayOrder: 1, createdAt: -1 }).lean();
-    response.json({ data: insights });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.post("/insights", async (request, response, next) => {
-  try {
-    const insight = await Insight.create({
-      ...request.body,
-      publishedAt: request.body.status === "published" ? new Date() : request.body.publishedAt,
-    });
-
-    response.status(201).json({ data: insight, message: "Insight created successfully." });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.put("/insights/:id", async (request, response, next) => {
-  try {
-    const insight = await Insight.findByIdAndUpdate(
-      request.params.id,
-      {
-        ...request.body,
-        publishedAt: request.body.status === "published" ? request.body.publishedAt || new Date() : request.body.publishedAt,
-      },
-      { new: true, runValidators: true },
-    ).lean();
-
-    response.json({ data: insight, message: "Insight updated successfully." });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.delete("/insights/:id", async (request, response, next) => {
-  try {
-    await Insight.findByIdAndDelete(request.params.id);
-    response.json({ message: "Insight deleted successfully." });
-  } catch (error) {
-    next(error);
-  }
-});
-
 router.get("/settings", async (_request, response, next) => {
   try {
     const settings = await SiteSetting.findOne({ key: "main" }).lean();
@@ -326,16 +339,22 @@ router.get("/settings", async (_request, response, next) => {
 
 router.put("/settings/:id", async (request, response, next) => {
   try {
-    const settings = await SiteSetting.findByIdAndUpdate(request.params.id, request.body, {
-      new: true,
-      runValidators: true,
-    }).lean();
+    const settings = await SiteSetting.findByIdAndUpdate(
+      request.params.id,
+      request.body,
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).lean();
 
-    response.json({ data: settings, message: "Site settings updated successfully." });
+    response.json({
+      data: settings,
+      message: "Site settings updated successfully.",
+    });
   } catch (error) {
     next(error);
   }
 });
 
 export const adminRoutes = router;
-

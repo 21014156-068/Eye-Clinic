@@ -5,10 +5,17 @@ import { Doctor } from "../models/Doctor.js";
 import { Insight } from "../models/Insight.js";
 import { Service } from "../models/Service.js";
 import { SiteSetting } from "../models/SiteSetting.js";
-import { defaultDoctors, defaultInsights, defaultServices, defaultSettings } from "./defaultContent.js";
+import {
+  defaultDoctors,
+  defaultInsights,
+  defaultServices,
+  defaultSettings,
+} from "./defaultContent.js";
 
 export async function seedDatabase() {
-  const existingAdmin = await AdminUser.findOne({ email: env.adminEmail.toLowerCase() });
+  const existingAdmin = await AdminUser.findOne({
+    email: env.adminEmail.toLowerCase(),
+  });
 
   if (!existingAdmin) {
     const passwordHash = await bcrypt.hash(env.adminPassword, 12);
@@ -43,4 +50,3 @@ export async function seedDatabase() {
     await Insight.insertMany(defaultInsights);
   }
 }
-

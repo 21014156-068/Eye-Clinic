@@ -16,4 +16,3 @@ export async function requestJson(url, options = {}) {
 
   return payload;
 }
-

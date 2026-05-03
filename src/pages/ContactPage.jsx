@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AnimatedSection } from "../components/AnimatedSection";
-import { contactPage, brand } from "../data/siteContent";
+import { usePublicSite } from "../hooks/PublicSiteContext";
 
 const supportFaq = [
   {
@@ -22,19 +22,20 @@ const supportFaq = [
 ];
 
 export default function ContactPage() {
-  // Update these quickly
-  const WHATSAPP_NUMBER = "+923477552842"; // <-- change
-  const PRIMARY_PHONE = brand?.phone || "+923477552842"; // <-- change if needed
-  const EMERGENCY_PHONE = brand?.emergencyPhone || PRIMARY_PHONE; // optional
+  // 1. Pull dynamic data from the database
+  const { settings } = usePublicSite();
 
-  // For the embedded map (replace with your actual Google Maps embed URL or place id link)
+  // 2. Map database settings with fallbacks
+  const PRIMARY_PHONE = settings?.phone || "+923477552842";
+  const WHATSAPP_NUMBER = settings?.whatsapp || PRIMARY_PHONE;
+  const EMERGENCY_PHONE = settings?.emergencyPhone || PRIMARY_PHONE;
+  const CLINIC_EMAIL = settings?.email || "clinic@email.com";
+
   const GOOGLE_MAPS_EMBED_URL =
-    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d0!2d0!3d0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sYour%20Clinic!5e0!3m2!1sen!2s!4v0000000000000"; // <-- change
-  const DIRECTIONS_URL =
-    "https://www.google.com/maps/dir/?api=1&destination=Your+Clinic+Address"; // <-- change
+    settings?.mapEmbedUrl ||
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d0!2d0!3d0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sYour%20Clinic!5e0!3m2!1sen!2s!4v0000000000000";
 
-  // ✅ UPDATED THEME: light + sky/navy (smooth, premium)
-  // ✅ Kept layout/structure the same; added small UI enhancements only
+  // ✅ THEME: light + sky/navy (smooth, premium)
   const theme = {
     sky: "#0ea5e9",
     skyHover: "#0284c7",
@@ -135,7 +136,7 @@ export default function ContactPage() {
     },
     socialRow: { display: "flex", gap: 12, flexWrap: "wrap", marginTop: 14 },
 
-    // Cards (light)
+    // Cards
     card: {
       position: "relative",
       overflow: "hidden",
@@ -145,7 +146,6 @@ export default function ContactPage() {
       padding: "24px",
       borderRadius: theme.radiusLG,
     },
-    // ✅ enhancement: a premium "hero-map" surface but still same section/component placement
     mapCard: {
       padding: "26px",
       borderRadius: theme.radiusXL,
@@ -154,20 +154,6 @@ export default function ContactPage() {
       boxShadow: theme.shadowStrong,
       position: "relative",
       overflow: "hidden",
-    },
-    tag: {
-      display: "inline-flex",
-      alignItems: "center",
-      padding: "7px 10px",
-      borderRadius: "999px",
-      fontSize: "0.78rem",
-      fontWeight: 800,
-      letterSpacing: "0.08em",
-      textTransform: "uppercase",
-      border: `1px solid ${theme.border}`,
-      background: theme.borderLight,
-      color: theme.navyMid,
-      whiteSpace: "nowrap",
     },
   };
 
@@ -181,7 +167,7 @@ export default function ContactPage() {
   }, [WHATSAPP_NUMBER]);
 
   // -------------------------------------------------------
-  // Contact form (minimal friction + inline validation)
+  // Contact form (Database Connected)
   // -------------------------------------------------------
   const SUBJECTS = [
     "General Inquiry",
@@ -212,7 +198,7 @@ export default function ContactPage() {
 
   const canSubmit = Object.keys(errors).length === 0;
 
-  const onSubmit = (ev) => {
+  const onSubmit = async (ev) => {
     ev.preventDefault();
     setTouched({
       fullName: true,
@@ -221,19 +207,40 @@ export default function ContactPage() {
       message: true,
       subject: true,
     });
+
     if (!canSubmit) return;
 
-    // Future: POST to backend
-    setSent(true);
-    setTimeout(() => setSent(false), 2500);
-    setForm({
-      fullName: "",
-      phone: "",
-      email: "",
-      subject: SUBJECTS[0],
-      message: "",
-    });
-    setTouched({});
+    try {
+      const response = await fetch("/api/public/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: form.fullName,
+          phone: form.phone,
+          email: form.email,
+          subject: form.subject,
+          message: form.message,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+
+      setSent(true);
+      setTimeout(() => setSent(false), 3000);
+      setForm({
+        fullName: "",
+        phone: "",
+        email: "",
+        subject: SUBJECTS[0],
+        message: "",
+      });
+      setTouched({});
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong. Please try calling us directly.");
+    }
   };
 
   return (
@@ -267,15 +274,12 @@ export default function ContactPage() {
         .button::after { content: ""; position: absolute; inset: 0; background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.18), transparent); transform: translateX(-120%); transition: transform 420ms ease; }
         .button:hover::after { transform: translateX(120%); }
 
-        /* ✅ smoother, more premium button system (same structure) */
         .button-primary { color: #fff; background: ${theme.sky}; box-shadow: 0 10px 28px rgba(14,165,233,0.30); }
         .button-primary:hover { background: ${theme.skyHover}; box-shadow: 0 14px 34px rgba(14,165,233,0.38); }
         .button-secondary { color: ${theme.sky}; border: 1.5px solid ${theme.sky}; background: #fff; }
         .button-secondary:hover { background: ${theme.skyLight}; }
         .button-ghost { color: ${theme.navy}; border: 1.5px solid ${theme.border}; background: rgba(255,255,255,0.7); }
         .button-ghost:hover { background: #fff; }
-        .button-danger { color: #b91c1c; border: 1.5px solid rgba(239,68,68,0.25); background: rgba(239,68,68,0.10); }
-        .button-danger:hover { background: rgba(239,68,68,0.14); }
 
         .input {
           width: 100%;
@@ -293,37 +297,24 @@ export default function ContactPage() {
           box-shadow: 0 0 0 4px rgba(14,165,233,0.10);
         }
 
-        /* ✅ small enhancement: clearer error styling on light bg */
         .error { margin-top: 8px; color: #b91c1c; font-size: 0.92rem; font-weight: 600; }
         .help { margin-top: 10px; color: ${theme.slate}; font-size: 0.95rem; line-height: 1.65; }
 
-        /* ✅ enhancement: a nicer focus ring for card-links without changing layout */
         a.hover-card:focus-visible, button.hover-card:focus-visible {
           outline: none;
           box-shadow: 0 0 0 4px rgba(14,165,233,0.18), ${theme.shadowStrong};
           border-color: rgba(14,165,233,0.35) !important;
         }
 
-        .floating-cta {
-          position: fixed;
-          right: 16px;
-          bottom: 16px;
-          z-index: 60;
-          display: grid;
-          gap: 10px;
-        }
-
         @media (max-width: 1180px) {
           .quick-grid, .dual-panel, .form-layout { grid-template-columns: 1fr !important; }
-          .floating-cta { left: 16px; right: 16px; }
-          .floating-cta .button { width: 100%; }
         }
         @media (max-width: 820px) {
           h2 { font-size: clamp(2rem, 9vw, 3rem) !important; }
         }
       `}</style>
 
-      {/* 2. Quick Contact Options */}
+      {/* Quick Contact Options */}
       <AnimatedSection style={s.sectionBand}>
         <div style={s.sectionShell}>
           <div style={s.sectionHead}>
@@ -420,7 +411,7 @@ export default function ContactPage() {
                 textAlign: "left",
                 textDecoration: "none",
               }}
-              href={`mailto:${brand?.email || ""}`}
+              href={`mailto:${CLINIC_EMAIL}`}
             >
               <span style={s.miniLabel}>Email us</span>
               <span
@@ -430,7 +421,7 @@ export default function ContactPage() {
                   fontSize: "1.1rem",
                 }}
               >
-                {brand?.email || "clinic@email.com"}
+                {CLINIC_EMAIL}
               </span>
               <span style={{ color: theme.slate }}>
                 We reply within 24 hours
@@ -488,21 +479,12 @@ export default function ContactPage() {
                   allowFullScreen
                 />
               </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: 12,
-                  flexWrap: "wrap",
-                  marginTop: 14,
-                }}
-              ></div>
             </article>
           </div>
         </div>
       </AnimatedSection>
 
-      {/* 5. Contact Form (Lead capture) */}
+      {/* Contact Form */}
       <AnimatedSection style={s.sectionBand}>
         <div style={s.sectionShell}>
           <div style={s.formLayout} className="form-layout">
@@ -514,7 +496,6 @@ export default function ContactPage() {
                 response.
               </p>
 
-              {/* 11. Response assurance */}
               <div className="hover-card" style={{ ...s.card, marginTop: 18 }}>
                 <p style={s.miniLabel}>Response assurance</p>
                 <h3 style={{ ...s.h3, marginTop: 0 }}>
@@ -548,35 +529,40 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              {/* 10. Social links */}
               <div className="hover-card" style={{ ...s.card, marginTop: 18 }}>
                 <p style={s.miniLabel}>Social</p>
                 <h3 style={{ ...s.h3, marginTop: 0 }}>Follow us</h3>
                 <div style={s.socialRow}>
-                  <a
-                    className="button button-ghost"
-                    href={brand?.facebook || "#"}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Facebook
-                  </a>
-                  <a
-                    className="button button-ghost"
-                    href={brand?.instagram || "#"}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Instagram
-                  </a>
-                  <a
-                    className="button button-ghost"
-                    href={brand?.youtube || "#"}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    YouTube
-                  </a>
+                  {settings?.facebook && (
+                    <a
+                      className="button button-ghost"
+                      href={settings.facebook}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Facebook
+                    </a>
+                  )}
+                  {settings?.instagram && (
+                    <a
+                      className="button button-ghost"
+                      href={settings.instagram}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Instagram
+                    </a>
+                  )}
+                  {settings?.youtube && (
+                    <a
+                      className="button button-ghost"
+                      href={settings.youtube}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      YouTube
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

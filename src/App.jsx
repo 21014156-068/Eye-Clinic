@@ -9,6 +9,7 @@ import { brand, utilityHighlights } from "./data/siteContent";
 import { AdminAuthProvider } from "./admin/AdminAuthContext";
 import { AdminRoute } from "./admin/AdminRoute";
 import { PublicSiteProvider } from "./hooks/PublicSiteContext";
+import { ModalProvider, useModal } from "./hooks/ModalContext";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminPanelPage from "./pages/AdminPanelPage";
 import ErrorPage from "./pages/ErrorPage";
@@ -77,6 +78,7 @@ function RouteRenderer({ location }) {
 function AppShell() {
   const location = useLocation();
   const routeTheme = getRouteTheme(location.pathname);
+  const { isModalOpen } = useModal();
 
   // Check if current path starts with /admin
   const isAdminRoute = location.pathname.startsWith("/admin");
@@ -86,8 +88,8 @@ function AppShell() {
       <ScrollToTop />
       <div className="site-noise" aria-hidden="true" />
 
-      {/* Hide Utility Bar, Header, and Beams on Admin pages */}
-      {!isAdminRoute && (
+      {/* Hide Utility Bar, Header, and Beams on Admin pages or when modal is open */}
+      {!isAdminRoute && !isModalOpen && (
         <>
           <div className="site-beam site-beam-a" aria-hidden="true" />
           <div className="site-beam site-beam-b" aria-hidden="true" />
@@ -113,9 +115,11 @@ function App() {
   return (
     <PublicSiteProvider>
       <AdminAuthProvider>
-        <BrowserRouter>
-          <AppShell />
-        </BrowserRouter>
+        <ModalProvider>
+          <BrowserRouter>
+            <AppShell />
+          </BrowserRouter>
+        </ModalProvider>
       </AdminAuthProvider>
     </PublicSiteProvider>
   );

@@ -5,7 +5,9 @@ const TOKEN_KEY = "eyecon-admin-token";
 const AdminAuthContext = createContext(null);
 
 export function AdminAuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || "");
+  const [token, setToken] = useState(
+    () => localStorage.getItem(TOKEN_KEY) || "",
+  );
   const [admin, setAdmin] = useState(null);
   const [ready, setReady] = useState(false);
 
@@ -93,7 +95,11 @@ export function AdminAuthProvider({ children }) {
     [admin, ready, token],
   );
 
-  return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;
+  return (
+    <AdminAuthContext.Provider value={value}>
+      {children}
+    </AdminAuthContext.Provider>
+  );
 }
 
 export function useAdminAuth() {
@@ -105,4 +111,3 @@ export function useAdminAuth() {
 
   return context;
 }
-

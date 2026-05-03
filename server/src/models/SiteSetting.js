@@ -1,70 +1,43 @@
+// models/SiteSetting.js
 import mongoose from "mongoose";
 
 const siteSettingSchema = new mongoose.Schema(
   {
-    aboutHeadline: {
-      type: String,
-      trim: true,
-      default: "Premium eye care, shaped to feel clear, calm, and confidently modern.",
-    },
-    aboutSummary: {
-      type: String,
-      trim: true,
-      default:
-        "EyeCon is designed as an advanced vision clinic where precision diagnostics, specialist guidance, and patient comfort all belong to the same experience.",
-    },
-    brandName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      trim: true,
-      lowercase: true,
-    },
-    hours: {
-      type: String,
-      trim: true,
-      required: true,
-    },
     key: {
       type: String,
       required: true,
       unique: true,
       default: "main",
     },
-    location: {
-      type: String,
-      required: true,
-      trim: true,
+    // Brand / Clinic info
+    clinicName: { type: String, trim: true },
+    tagline: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    emergencyPhone: { type: String, trim: true },
+    email: { type: String, trim: true, lowercase: true },
+    address: { type: String, trim: true },
+    mapEmbedUrl: { type: String, trim: true }, // for the iframe src
+    directionsUrl: { type: String, trim: true },
+
+    // Social links
+    facebook: { type: String, trim: true },
+    instagram: { type: String, trim: true },
+    youtube: { type: String, trim: true },
+    linkedin: { type: String, trim: true },
+
+    // Business hours (optional)
+    businessHours: {
+      type: Map,
+      of: String,
+      default: {},
     },
-    phone: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    signature: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    tagline: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    whatsapp: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+
+    // Other global settings
+    logoUrl: { type: String, trim: true },
+    faviconUrl: { type: String, trim: true },
+    footerCopyright: { type: String, trim: true },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
 export const SiteSetting = mongoose.model("SiteSetting", siteSettingSchema);
-
