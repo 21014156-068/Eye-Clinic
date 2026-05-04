@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { requestJson } from "../lib/api";
 
 const PublicSiteContext = createContext(null);
 
@@ -6,7 +7,6 @@ export function PublicSiteProvider({ children }) {
   const [data, setData] = useState({
     doctors: [],
     services: [],
-    insights: [],
     settings: null,
   });
   const [loading, setLoading] = useState(true);
@@ -15,10 +15,7 @@ export function PublicSiteProvider({ children }) {
     setLoading(true);
     try {
       // Calls your brilliant backend bootstrap route
-      const response = await fetch("/api/public/bootstrap");
-      if (!response.ok) throw new Error("Failed to fetch public data");
-
-      const json = await response.json();
+      const json = await requestJson("/api/public/bootstrap");
       setData(json.data);
     } catch (error) {
       console.error("Public fetch error:", error);
@@ -35,7 +32,7 @@ export function PublicSiteProvider({ children }) {
   return (
     <PublicSiteContext.Provider
       value={{
-        ...data, // spreads doctors, services, insights, settings
+        ...data, // spreads doctors, services, settings
         loading,
         refreshPublicSite: fetchPublicData,
       }}

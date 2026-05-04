@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AnimatedSection } from "../components/AnimatedSection";
 import { usePublicSite } from "../hooks/PublicSiteContext";
+import { requestJson } from "../lib/api";
 
 const appointmentFaq = [
   {
@@ -330,9 +331,8 @@ export default function AppointmentPage() {
   // -------------------------------------------------------
   const confirm = async () => {
     try {
-      const response = await fetch("/api/public/appointments", {
+      await requestJson("/api/public/appointments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName: booking.fullName,
           phone: booking.phone,
@@ -348,8 +348,6 @@ export default function AppointmentPage() {
           time: booking.time,
         }),
       });
-
-      if (!response.ok) throw new Error("Failed to book appointment");
       setConfirmed(true);
     } catch (error) {
       console.error(error);
@@ -373,9 +371,8 @@ export default function AppointmentPage() {
       // Create a default 'appointment' for quick callbacks so admins see it in the dashboard
       const dateToUse =
         quick.preferredDate || new Date().toISOString().slice(0, 10);
-      const response = await fetch("/api/public/appointments", {
+      await requestJson("/api/public/appointments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName: quick.name,
           phone: quick.phone,
@@ -388,8 +385,6 @@ export default function AppointmentPage() {
           time: "09:00", // Default placeholder time
         }),
       });
-
-      if (!response.ok) throw new Error("Failed to submit quick booking");
 
       setQuickSent(true);
       setTimeout(() => setQuickSent(false), 3000);

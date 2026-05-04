@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AnimatedSection } from "../components/AnimatedSection";
 import { usePublicSite } from "../hooks/PublicSiteContext";
+import { requestJson } from "../lib/api";
 
 const supportFaq = [
   {
@@ -211,9 +212,8 @@ export default function ContactPage() {
     if (!canSubmit) return;
 
     try {
-      const response = await fetch("/api/public/messages", {
+      await requestJson("/api/public/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName: form.fullName,
           phone: form.phone,
@@ -222,10 +222,6 @@ export default function ContactPage() {
           message: form.message,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to send message");
-      }
 
       setSent(true);
       setTimeout(() => setSent(false), 3000);
