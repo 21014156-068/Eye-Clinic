@@ -18,6 +18,12 @@ app.use(morgan("dev"));
 
 app.use("/api/public", publicRoutes);
 app.use("/api/admin", adminRoutes);
+app.get("/", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "EyeCon API is running successfully",
+  });
+});
 
 app.use((error, _request, response, _next) => {
   const statusCode = error.name === "ValidationError" ? 400 : 500;
