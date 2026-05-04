@@ -101,7 +101,6 @@ router.get("/dashboard", async (_request, response, next) => {
       messagesCount,
       doctorsCount,
       servicesCount,
-      insightsCount,
       recentAppointments,
       recentMessages,
     ] = await Promise.all([
@@ -109,7 +108,6 @@ router.get("/dashboard", async (_request, response, next) => {
       ContactMessage.countDocuments(),
       Doctor.countDocuments(),
       Service.countDocuments(),
-      Insight.countDocuments(),
       Appointment.find().sort({ createdAt: -1 }).limit(5).lean(),
       ContactMessage.find().sort({ createdAt: -1 }).limit(5).lean(),
     ]);
@@ -121,7 +119,6 @@ router.get("/dashboard", async (_request, response, next) => {
         stats: {
           appointmentsCount,
           doctorsCount,
-          insightsCount,
           messagesCount,
           servicesCount,
         },
