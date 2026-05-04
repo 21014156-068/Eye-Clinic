@@ -6,9 +6,9 @@ import { seedDatabase } from "./seed/seedDatabase.js";
 async function startServer() {
   await connectDatabase();
   await seedDatabase();
-  const PORT = env.port || 5000;
-  app.listen(PORT, () => {
-    console.log(`EyeCon server running on port ${PORT}`);
+
+  app.listen(env.port, () => {
+    console.log(`EyeCon server running on port ${env.port}`);
   });
 }
 
