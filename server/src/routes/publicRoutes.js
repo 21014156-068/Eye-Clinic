@@ -2,7 +2,6 @@ import express from "express";
 import { Appointment } from "../models/Appointment.js";
 import { ContactMessage } from "../models/ContactMessage.js";
 import { Doctor } from "../models/Doctor.js";
-import { Insight } from "../models/Insight.js";
 import { Service } from "../models/Service.js";
 import { SiteSetting } from "../models/SiteSetting.js";
 
@@ -14,7 +13,7 @@ router.get("/health", (_request, response) => {
 
 router.get("/bootstrap", async (_request, response, next) => {
   try {
-    const [settings, doctors, services, insights] = await Promise.all([
+    const [settings, doctors, services] = await Promise.all([
       SiteSetting.findOne({ key: "main" }).lean(),
       Doctor.find({ active: true })
         .sort({ featured: -1, displayOrder: 1, name: 1 })
@@ -22,15 +21,12 @@ router.get("/bootstrap", async (_request, response, next) => {
       Service.find({ active: true })
         .sort({ featured: -1, displayOrder: 1, title: 1 })
         .lean(),
-      Insight.find({ status: "published" })
-        .sort({ featured: -1, displayOrder: 1, publishedAt: -1 })
-        .lean(),
     ]);
 
     response.json({
       data: {
         doctors,
-        insights,
+
         services,
         settings,
       },

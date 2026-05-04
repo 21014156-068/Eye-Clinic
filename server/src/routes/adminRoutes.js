@@ -7,7 +7,6 @@ import { AdminUser } from "../models/AdminUser.js";
 import { Appointment } from "../models/Appointment.js";
 import { ContactMessage } from "../models/ContactMessage.js";
 import { Doctor } from "../models/Doctor.js";
-import { Insight } from "../models/Insight.js";
 import { Service } from "../models/Service.js";
 import { SiteSetting } from "../models/SiteSetting.js";
 

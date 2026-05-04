@@ -2,12 +2,10 @@ import bcrypt from "bcryptjs";
 import { env } from "../config/env.js";
 import { AdminUser } from "../models/AdminUser.js";
 import { Doctor } from "../models/Doctor.js";
-import { Insight } from "../models/Insight.js";
 import { Service } from "../models/Service.js";
 import { SiteSetting } from "../models/SiteSetting.js";
 import {
   defaultDoctors,
-  defaultInsights,
   defaultServices,
   defaultSettings,
 } from "./defaultContent.js";
@@ -42,11 +40,5 @@ export async function seedDatabase() {
 
   if (servicesCount === 0) {
     await Service.insertMany(defaultServices);
-  }
-
-  const insightsCount = await Insight.countDocuments();
-
-  if (insightsCount === 0) {
-    await Insight.insertMany(defaultInsights);
   }
 }
