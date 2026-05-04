@@ -5,14 +5,15 @@ import { seedDatabase } from "./seed/seedDatabase.js";
 
 async function startServer() {
   await connectDatabase();
-  await seedDatabase();
 
-  app.listen(env.port, () => {
-    console.log(`EyeCon server running on port ${env.port}`);
+  const PORT = process.env.PORT || env.port || 5000;
+
+  app.listen(PORT, () => {
+    console.log(`EyeCon server running on port ${PORT}`);
+  });
+
+  // run seeding in background (don’t block server)
+  seedDatabase().catch((error) => {
+    console.error("Seeding failed:", error);
   });
 }
-
-startServer().catch((error) => {
-  console.error("Failed to start EyeCon server", error);
-  process.exit(1);
-});
