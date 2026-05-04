@@ -11,7 +11,6 @@ const sections = [
   { id: "messages", label: "Messages", icon: "💬" },
   { id: "doctors", label: "Doctors", icon: "👨‍⚕️" },
   { id: "services", label: "Services", icon: "⚙️" },
-  // { id: "insights", label: "Insights", icon: "📝" },
   { id: "settings", label: "Settings", icon: "🔧" },
 ];
 
@@ -55,20 +54,6 @@ const emptyService = {
   treatments: "",
 };
 
-const emptyInsight = {
-  _id: "",
-  title: "",
-  slug: "",
-  summary: "",
-  content: "",
-  imageUrl: "",
-  category: "",
-  tags: "",
-  status: "draft",
-  featured: false,
-  displayOrder: 0,
-};
-
 const slugify = (value) =>
   String(value || "")
     .toLowerCase()
@@ -98,12 +83,6 @@ const normalizeService = (service) => ({
   symptoms: toCsv(service.symptoms),
   doctorRoles: toCsv(service.doctorRoles),
   treatments: toCsv(service.treatments),
-});
-
-const normalizeInsight = (insight) => ({
-  ...emptyInsight,
-  ...insight,
-  tags: toCsv(insight.tags),
 });
 
 // ----------------------------------------------------------------------
@@ -152,12 +131,10 @@ export default function AdminPanelPage() {
   const [messages, setMessages] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [services, setServices] = useState([]);
-  const [insights, setInsights] = useState([]);
   const [settings, setSettings] = useState(null);
 
   const [doctorForm, setDoctorForm] = useState(emptyDoctor);
   const [serviceForm, setServiceForm] = useState(emptyService);
-  const [insightForm, setInsightForm] = useState(emptyInsight);
 
   const [quickFilter, setQuickFilter] = useState("");
   const normalizedQuickFilter = quickFilter.trim().toLowerCase();
@@ -199,7 +176,6 @@ export default function AdminPanelPage() {
         messagesPayload,
         doctorsPayload,
         servicesPayload,
-        insightsPayload,
         settingsPayload,
       ] = await Promise.all([
         apiFetch("/api/admin/dashboard"),
@@ -207,7 +183,6 @@ export default function AdminPanelPage() {
         apiFetch("/api/admin/messages"),
         apiFetch("/api/admin/doctors"),
         apiFetch("/api/admin/services"),
-        apiFetch("/api/admin/insights"),
         apiFetch("/api/admin/settings"),
       ]);
 
@@ -216,7 +191,6 @@ export default function AdminPanelPage() {
       setMessages(messagesPayload.data);
       setDoctors(doctorsPayload.data);
       setServices(servicesPayload.data);
-      setInsights(insightsPayload.data);
       setSettings(settingsPayload.data);
 
       setDoctorForm((current) =>
@@ -228,11 +202,6 @@ export default function AdminPanelPage() {
         current._id
           ? current
           : normalizeService(servicesPayload.data[0] || emptyService),
-      );
-      setInsightForm((current) =>
-        current._id
-          ? current
-          : normalizeInsight(insightsPayload.data[0] || emptyInsight),
       );
 
       setFeedback("");
@@ -284,24 +253,26 @@ export default function AdminPanelPage() {
 
   const saveDoctor = async (event) => {
     event.preventDefault();
-    const payload = await apiFetch(
-      doctorForm._id
-        ? `/api/admin/doctors/${doctorForm._id}`
-        : "/api/admin/doctors",
-      {
-        method: doctorForm._id ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...doctorForm,
-          focus: fromCsv(doctorForm.focus), // Convert string to Array
-          slug: slugify(doctorForm.name),
-        }),
-      },
-    );
-    startTransition(() => setDoctorForm(emptyDoctor));
-    setFeedback(payload.message || "Doctor saved.");
-    await loadAdminData();
-    await refreshPublicSite();
+    const { _id: doctorId, ...doctorData } = doctorForm;
+    try {
+      const payload = await apiFetch(
+        doctorId ? `/api/admin/doctors/${doctorId}` : "/api/admin/doctors",
+        {
+          method: doctorId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...doctorData,
+            focus: fromCsv(doctorData.focus),
+          }),
+        },
+      );
+      startTransition(() => setDoctorForm(emptyDoctor));
+      setFeedback(payload.message || "Doctor saved.");
+      await loadAdminData();
+      await refreshPublicSite();
+    } catch (error) {
+      setFeedback(error.message || "Failed to save doctor.");
+    }
   };
 
   const deleteDoctor = async (id) => {
@@ -314,66 +285,31 @@ export default function AdminPanelPage() {
 
   const saveService = async (event) => {
     event.preventDefault();
-    const payload = await apiFetch(
-      serviceForm._id
-        ? `/api/admin/services/${serviceForm._id}`
-        : "/api/admin/services",
-      {
-        method: serviceForm._id ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...serviceForm,
-          tags: fromCsv(serviceForm.tags),
-          benefits: fromCsv(serviceForm.benefits),
-          symptoms: fromCsv(serviceForm.symptoms),
-          doctorRoles: fromCsv(serviceForm.doctorRoles),
-          treatments: fromCsv(serviceForm.treatments),
-          slug: serviceForm.slug || slugify(serviceForm.title),
-        }),
-      },
-    );
-    startTransition(() => setServiceForm(emptyService));
-    setFeedback(payload.message || "Service saved.");
-    await loadAdminData();
-    await refreshPublicSite();
-  };
-
-  const deleteService = async (id) => {
-    await apiFetch(`/api/admin/services/${id}`, { method: "DELETE" });
-    setServiceForm(emptyService);
-    setFeedback("Service deleted successfully.");
-    await loadAdminData();
-    await refreshPublicSite();
-  };
-
-  const saveInsight = async (event) => {
-    event.preventDefault();
-    const payload = await apiFetch(
-      insightForm._id
-        ? `/api/admin/insights/${insightForm._id}`
-        : "/api/admin/insights",
-      {
-        method: insightForm._id ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...insightForm,
-          tags: fromCsv(insightForm.tags),
-          slug: insightForm.slug || slugify(insightForm.title),
-        }),
-      },
-    );
-    startTransition(() => setInsightForm(emptyInsight));
-    setFeedback(payload.message || "Insight saved.");
-    await loadAdminData();
-    await refreshPublicSite();
-  };
-
-  const deleteInsight = async (id) => {
-    await apiFetch(`/api/admin/insights/${id}`, { method: "DELETE" });
-    setInsightForm(emptyInsight);
-    setFeedback("Insight deleted successfully.");
-    await loadAdminData();
-    await refreshPublicSite();
+    const { _id: serviceId, ...serviceData } = serviceForm;
+    try {
+      const payload = await apiFetch(
+        serviceId ? `/api/admin/services/${serviceId}` : "/api/admin/services",
+        {
+          method: serviceId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...serviceData,
+            tags: fromCsv(serviceData.tags),
+            benefits: fromCsv(serviceData.benefits),
+            symptoms: fromCsv(serviceData.symptoms),
+            doctorRoles: fromCsv(serviceData.doctorRoles),
+            treatments: fromCsv(serviceData.treatments),
+            slug: serviceData.slug || slugify(serviceData.title),
+          }),
+        },
+      );
+      startTransition(() => setServiceForm(emptyService));
+      setFeedback(payload.message || "Service saved.");
+      await loadAdminData();
+      await refreshPublicSite();
+    } catch (error) {
+      setFeedback(error.message || "Failed to save service.");
+    }
   };
 
   const saveSettings = async (event) => {
@@ -432,15 +368,6 @@ export default function AdminPanelPage() {
     );
   }, [services, normalizedQuickFilter]);
 
-  const filteredInsights = useMemo(() => {
-    if (!normalizedQuickFilter) return insights;
-    return insights.filter((i) =>
-      `${i.title} ${i.category} ${i.status}`
-        .toLowerCase()
-        .includes(normalizedQuickFilter),
-    );
-  }, [insights, normalizedQuickFilter]);
-
   // --------------------------------------------------------------------
   // Renderers
   // --------------------------------------------------------------------
@@ -466,11 +393,6 @@ export default function AdminPanelPage() {
           label="Services"
           value={dashboard?.stats?.servicesCount || 0}
           meta="Catalog"
-        />
-        <DashboardCard
-          label="Insights"
-          value={dashboard?.stats?.insightsCount || 0}
-          meta="Content"
         />
       </div>
 
@@ -1160,176 +1082,6 @@ export default function AdminPanelPage() {
     </div>
   );
 
-  const renderInsights = () => (
-    <div className="admin-editor-layout">
-      <form className="admin-form-card" onSubmit={saveInsight}>
-        <div className="admin-form-head">
-          <div>
-            <h3>{insightForm._id ? "Edit insight" : "Create insight"}</h3>
-            <p className="admin-muted mb-1">
-              Educational articles and blog posts.
-            </p>
-          </div>
-          <button
-            className="admin-btn admin-btn-ghost admin-btn-sm"
-            onClick={() => setInsightForm(emptyInsight)}
-            type="button"
-          >
-            New
-          </button>
-        </div>
-        <div className="admin-form-grid">
-          <label className="admin-field admin-field-span2">
-            <span>Title</span>
-            <input
-              onChange={(e) =>
-                setInsightForm((c) => ({ ...c, title: e.target.value }))
-              }
-              value={insightForm.title}
-              placeholder="Understanding Cataracts"
-              required
-            />
-          </label>
-          <label className="admin-field">
-            <span>Category</span>
-            <input
-              onChange={(e) =>
-                setInsightForm((c) => ({ ...c, category: e.target.value }))
-              }
-              value={insightForm.category}
-              placeholder="Eye Health"
-            />
-          </label>
-          <label className="admin-field">
-            <span>Status</span>
-            <select
-              className="admin-select"
-              value={insightForm.status}
-              onChange={(e) =>
-                setInsightForm((c) => ({ ...c, status: e.target.value }))
-              }
-            >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
-          </label>
-          <label className="admin-field admin-field-span2">
-            <span>Tags (CSV)</span>
-            <input
-              onChange={(e) =>
-                setInsightForm((c) => ({ ...c, tags: e.target.value }))
-              }
-              value={insightForm.tags}
-              placeholder="LASIK, Surgery, Eyes"
-            />
-          </label>
-          <label className="admin-field admin-field-span2">
-            <span>Image URL</span>
-            <input
-              onChange={(e) =>
-                setInsightForm((c) => ({ ...c, imageUrl: e.target.value }))
-              }
-              value={insightForm.imageUrl}
-              placeholder="https://..."
-            />
-          </label>
-          <label className="admin-field admin-field-span2">
-            <span>Summary</span>
-            <textarea
-              onChange={(e) =>
-                setInsightForm((c) => ({ ...c, summary: e.target.value }))
-              }
-              rows="3"
-              value={insightForm.summary}
-              placeholder="Short summary for cards…"
-            />
-          </label>
-          <label className="admin-field admin-field-span2">
-            <span>Content</span>
-            <textarea
-              className="admin-textarea-lg"
-              onChange={(e) =>
-                setInsightForm((c) => ({ ...c, content: e.target.value }))
-              }
-              rows="10"
-              value={insightForm.content}
-              placeholder="Full article content…"
-              required
-            />
-          </label>
-          <label className="admin-field">
-            <span>Display Order</span>
-            <input
-              type="number"
-              onChange={(e) =>
-                setInsightForm((c) => ({
-                  ...c,
-                  displayOrder: Number(e.target.value),
-                }))
-              }
-              value={insightForm.displayOrder}
-            />
-          </label>
-          <div className="admin-inline-checks">
-            <label>
-              <input
-                type="checkbox"
-                checked={insightForm.featured}
-                onChange={(e) =>
-                  setInsightForm((c) => ({ ...c, featured: e.target.checked }))
-                }
-              />{" "}
-              Featured
-            </label>
-          </div>
-        </div>
-        <button className="admin-btn admin-btn-primary" type="submit">
-          {insightForm._id ? "Update insight" : "Create insight"}
-        </button>
-      </form>
-      <div className="admin-list-card">
-        <div className="admin-list-head">
-          <h3>Insights</h3>
-        </div>
-        {!filteredInsights.length ? (
-          <EmptyState
-            title="No matching insights"
-            copy="Try a different search keyword."
-          />
-        ) : (
-          filteredInsights.map((insight) => (
-            <article
-              className="admin-list-row admin-list-row-block"
-              key={insight._id}
-            >
-              <div className="admin-list-left">
-                <strong>{insight.title}</strong>
-                <p>
-                  {insight.category} · <StatusPill status={insight.status} />
-                </p>
-              </div>
-              <div className="admin-row-actions">
-                <button
-                  className="admin-btn admin-btn-secondary admin-btn-sm"
-                  onClick={() => setInsightForm(normalizeInsight(insight))}
-                >
-                  Edit
-                </button>
-                <button
-                  className="admin-btn admin-btn-danger admin-btn-sm"
-                  onClick={() => deleteInsight(insight._id)}
-                >
-                  Delete
-                </button>
-              </div>
-            </article>
-          ))
-        )}
-      </div>
-    </div>
-  );
-
   const renderSettings = () => (
     <div className="admin-section-body">
       <form
@@ -1584,7 +1336,6 @@ export default function AdminPanelPage() {
                 {activeSection === "messages" && renderMessages()}
                 {activeSection === "doctors" && renderDoctors()}
                 {activeSection === "services" && renderServices()}
-                {activeSection === "insights" && renderInsights()}
                 {activeSection === "settings" && renderSettings()}
               </div>
             )}
