@@ -36,6 +36,70 @@ router.get("/bootstrap", async (_request, response, next) => {
   }
 });
 
+// Public: list doctors (active only)
+router.get("/doctors", async (_request, response, next) => {
+  try {
+    const doctors = await Doctor.find({ active: true })
+      .sort({ featured: -1, displayOrder: 1, name: 1 })
+      .lean();
+
+    response.json({ data: doctors });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Public: get single doctor by id
+router.get("/doctors/:id", async (request, response, next) => {
+  try {
+    const doctor = await Doctor.findById(request.params.id).lean();
+
+    if (!doctor)
+      return response.status(404).json({ message: "Doctor not found." });
+
+    response.json({ data: doctor });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Public: list services (active only)
+router.get("/services", async (_request, response, next) => {
+  try {
+    const services = await Service.find({ active: true })
+      .sort({ featured: -1, displayOrder: 1, title: 1 })
+      .lean();
+
+    response.json({ data: services });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Public: get single service by id
+router.get("/services/:id", async (request, response, next) => {
+  try {
+    const service = await Service.findById(request.params.id).lean();
+
+    if (!service)
+      return response.status(404).json({ message: "Service not found." });
+
+    response.json({ data: service });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Public: site settings (main)
+router.get("/settings", async (_request, response, next) => {
+  try {
+    const settings = await SiteSetting.findOne({ key: "main" }).lean();
+    response.json({ data: settings });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // POST: Add new appointment (Maps to your frontend step-by-step form)
 router.post("/appointments", async (request, response, next) => {
   try {
