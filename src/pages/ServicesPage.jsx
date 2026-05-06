@@ -68,7 +68,7 @@ export default function ServicesPage() {
     },
     h2: {
       fontFamily: "'DM Serif Display', serif",
-      fontSize: "clamp(2rem, 3.5vw, 3.2rem)",
+      fontSize: "clamp(1.5rem, 3.1vw, 3.1rem)",
       color: theme.navy,
       lineHeight: 1.1,
       letterSpacing: "-0.02em",
@@ -510,7 +510,7 @@ export default function ServicesPage() {
       <AnimatedSection style={{ ...s.sectionBand, background: "#fff" }}>
         <div style={s.sectionShell} ref={refs.allServices}>
           <div style={s.sectionHead}>
-            <div style={{ ...s.eyebrow, marginTop: "40px" }}>
+            <div style={{ ...s.eyebrow, marginTop: "100px" }}>
               {isFiltering ? "Search Results" : "All Services"}
             </div>
             <h2 style={s.h2}>
