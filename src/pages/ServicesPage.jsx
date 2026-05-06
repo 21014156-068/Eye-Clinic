@@ -68,7 +68,7 @@ export default function ServicesPage() {
     },
     h2: {
       fontFamily: "'DM Serif Display', serif",
-      fontSize: "clamp(1.5rem, 3.1vw, 3.1rem)",
+      fontSize: "clamp(1.8rem, 3.1vw, 3.1rem)",
       color: theme.navy,
       lineHeight: 1.1,
       letterSpacing: "-0.02em",
@@ -547,7 +547,7 @@ export default function ServicesPage() {
                     <h3
                       style={{
                         fontFamily: "'DM Serif Display', serif",
-                        fontSize: "1.35rem",
+                        fontSize: "1.2rem",
                         margin: "12px 0 6px",
                         color: theme.navy,
                       }}
