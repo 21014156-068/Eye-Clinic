@@ -39,8 +39,8 @@ export default function GalleryPage() {
     borderLight: "#f1f5f9",
     radiusXL: "36px",
     radiusLG: "28px",
-    shadow: "0 4px 24px rgba(14,165,233,0.08), 0 1px 4px rgba(0,0,0,0.06)",
-    shadowStrong: "0 20px 60px rgba(2,8,23,0.14), 0 2px 10px rgba(2,8,23,0.08)",
+    shadow: "0 4px 24px rgba(14, 165, 233, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06)",
+    shadowStrong: "0 20px 60px rgba(2, 8, 23, 0.14), 0 2px 10px rgba(2, 8, 23, 0.08)",
     containerWide: "min(1520px, calc(100% - 24px))",
   };
 
@@ -73,8 +73,8 @@ export default function GalleryPage() {
     },
     h3: {
       margin: "16px 0 10px",
-      fontFamily: "'DM Serif Display', serif",
-      fontSize: "1.42rem",
+      fontFamily: "‘DM Serif Display’, serif",
+      fontSize: "1.5rem",
       letterSpacing: "-0.02em",
       color: theme.navy,
     },
@@ -82,7 +82,7 @@ export default function GalleryPage() {
     eyebrow: {
       display: "inline-flex",
       padding: "6px 14px",
-      border: `1px solid rgba(14,165,233,0.20)`,
+      border: "1px solid rgba(14,165,233,0.20)",
       borderRadius: "999px",
       background: theme.skyLight,
       color: theme.skyHover,
@@ -116,7 +116,7 @@ export default function GalleryPage() {
     card: {
       position: "relative",
       overflow: "hidden",
-      border: `1px solid ${theme.border}`,
+      border: "1px solid " + theme.border,
       background: theme.white,
       boxShadow: theme.shadow,
       padding: "28px",
@@ -149,7 +149,7 @@ export default function GalleryPage() {
       padding: "86px 0 42px",
       background:
         "linear-gradient(150deg, #e0f2fe 0%, #f0f9ff 40%, #ffffff 100%)",
-      borderBottom: `1px solid ${theme.border}`,
+      borderBottom: "1px solid " + theme.border,
     },
   };
 
@@ -163,10 +163,8 @@ export default function GalleryPage() {
         type: "image",
         category: "Clinic Infrastructure",
         title: "Operation Theatre",
-        caption:
-          "A sterile, premium surgical environment designed for precision.",
-        description:
-          "Designed for safety-first workflows, clinical control, and patient comfort.",
+        caption: "A sterile, premium surgical environment designed for precision.",
+        description: "Designed for safety-first workflows, clinical control, and patient comfort.",
         src: "/assets/gallery/op-theatre.jpg",
         tags: ["operation room", "surgery", "sterile"],
         featured: true,
@@ -177,8 +175,7 @@ export default function GalleryPage() {
         category: "Technology & Equipment",
         title: "Advanced Laser System",
         caption: "High-precision laser platform for refractive planning.",
-        description:
-          "Supports accuracy, safety checks, and predictable outcomes.",
+        description: "Supports accuracy, safety checks, and predictable outcomes.",
         src: "/assets/gallery/laser.jpg",
         tags: ["LASIK", "laser", "technology"],
         featured: true,
@@ -189,8 +186,7 @@ export default function GalleryPage() {
         category: "Doctors & Staff",
         title: "Doctor at Work",
         caption: "Specialist-led care at every step.",
-        description:
-          "Every scan is interpreted by clinicians with structured decision support.",
+        description: "Every scan is interpreted by clinicians with structured decision support.",
         src: "/assets/gallery/doctor-work.jpg",
         tags: ["doctor", "consultation"],
         featured: true,
@@ -201,8 +197,7 @@ export default function GalleryPage() {
         category: "Clinic Infrastructure",
         title: "Clinic Tour (Video)",
         caption: "Walk through the environment before your visit.",
-        description:
-          "A quick overview of reception, diagnostics, and treatment spaces.",
+        description: "A quick overview of reception, diagnostics, and treatment spaces.",
         videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
         tags: ["tour", "clinic"],
       },
@@ -219,7 +214,7 @@ export default function GalleryPage() {
     ];
 
     const spaces = (galleryPage?.spaces || []).map((space, idx) => ({
-      id: `space-${idx}`,
+      id: `${space}-${idx}`,
       type: "image",
       category: "Clinic Infrastructure",
       title: space.title,
@@ -287,7 +282,7 @@ export default function GalleryPage() {
   }, [lightboxItem]);
 
   // -------------------------------------------------------
-  // Smooth scroll sections
+  // Smooth scroll sections (refs kept for future internal jumps)
   // -------------------------------------------------------
   const refs = {
     featured: useRef(null),
@@ -317,33 +312,112 @@ export default function GalleryPage() {
   }, [WHATSAPP_NUMBER]);
 
   return (
-    <main style={s.main}>
+    <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap');
 
-        .hover-card { transition: transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease; position: relative; }
-        .hover-card:hover { transform: translateY(-8px); border-color: rgba(14,165,233,0.35) !important; box-shadow: 0 18px 50px rgba(2,8,23,0.14) !important; }
-        .hover-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 10%, rgba(14,165,233,0.10) 50%, transparent 90%); transform: translateX(-120%); transition: transform 780ms ease; }
-        .hover-card:hover::before { transform: translateX(120%); }
+        .hover-card {
+          transition: transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
+          position: relative;
+        }
+        .hover-card:hover {
+          transform: translateY(-8px);
+          border-color: rgba(14,165,233,0.35) !important;
+          box-shadow: 0 18px 50px rgba(2,8,23,0.14) !important;
+        }
+        .hover-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background: linear-gradient(115deg, transparent 10%, rgba(14,165,233,0.10) 50%, transparent 90%);
+          transform: translateX(-120%);
+          transition: transform 780ms ease;
+        }
+        .hover-card:hover::before {
+          transform: translateX(120%);
+        }
 
         /* Mosaic Spans Logic */
         .mos-span-7 { grid-column: span 7; }
         .mos-span-5 { grid-column: span 5; }
 
-        .button { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 24px; border-radius: 999px; font-weight: 700; transition: transform 220ms ease, background 220ms ease, box-shadow 220ms ease; text-decoration: none; position: relative; overflow: hidden; white-space: nowrap; border: 1px solid transparent; cursor: pointer; font-family: 'Inter', system-ui; }
-        .button:hover { transform: translateY(-2px); }
-        .button::after { content: ""; position: absolute; inset: 0; background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.18), transparent); transform: translateX(-120%); transition: transform 420ms ease; }
-        .button:hover::after { transform: translateX(120%); }
-        .button-primary { color: #fff; background: ${theme.sky}; box-shadow: 0 8px 24px rgba(14,165,233,0.32); }
-        .button-primary:hover { background: ${theme.skyHover}; box-shadow: 0 12px 32px rgba(14,165,233,0.40); }
-        .button-secondary { color: ${theme.sky}; border: 1.5px solid ${theme.sky}; background: #fff; }
-        .button-secondary:hover { background: ${theme.skyLight}; }
-        .button-ghost { color: ${theme.navy}; border: 1.5px solid ${theme.border}; background: rgba(255,255,255,0.7); }
-        .button-ghost:hover { background: #fff; }
-        .button-danger { color: #b91c1c; border: 1.5px solid rgba(239,68,68,0.25); background: rgba(239,68,68,0.10); }
-        .button-danger:hover { background: rgba(239,68,68,0.14); }
+        .button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 50px;
+          padding: 0 24px;
+          border-radius: 999px;
+          font-weight: 700;
+          transition: transform 220ms ease, background 220ms ease, box-shadow 220ms ease;
+          text-decoration: none;
+          position: relative;
+          overflow: hidden;
+          white-space: nowrap;
+          border: 1px solid transparent;
+          cursor: pointer;
+          font-family: 'Inter', system-ui;
+        }
+        .button:hover {
+          transform: translateY(-2px);
+        }
+        .button::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+          transform: translateX(-120%);
+          transition: transform 420ms ease;
+        }
+        .button:hover::after {
+          transform: translateX(120%);
+        }
+        .button-primary {
+          color: #fff;
+          background: ${theme.sky};
+          box-shadow: 0 8px 24px rgba(14,165,233,0.32);
+        }
+        .button-primary:hover {
+          background: ${theme.skyHover};
+          box-shadow: 0 12px 32px rgba(14,165,233,0.40);
+        }
+        .button-secondary {
+          color: ${theme.sky};
+          border: 1.5px solid ${theme.sky};
+          background: #fff;
+        }
+        .button-secondary:hover {
+          background: ${theme.skyLight};
+        }
+        .button-ghost {
+          color: ${theme.navy};
+          border: 1.5px solid ${theme.border};
+          background: rgba(255,255,255,0.7);
+        }
+        .button-ghost:hover {
+          background: #fff;
+        }
+        .button-danger {
+          color: #b91c1c;
+          border: 1.5px solid rgba(239,68,68,0.25);
+          background: rgba(239,68,68,0.10);
+        }
+        .button-danger:hover {
+          background: rgba(239,68,68,0.14);
+        }
 
-        .cta-banner { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 34px; border-radius: 36px; background: linear-gradient(135deg, ${theme.navy} 0%, ${theme.navyMid} 100%); border: 1px solid rgba(255,255,255,0.12); box-shadow: ${theme.shadowStrong}; }
+        .cta-banner {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 24px;
+          padding: 34px;
+          border-radius: 36px;
+          background: linear-gradient(135deg, ${theme.navy} 0%, ${theme.navyMid} 100%);
+          border: 1px solid rgba(255,255,255,0.12);
+          box-shadow: ${theme.shadowStrong};
+        }
 
         /* Masonry-ish (CSS columns) for fast masonry without libs */
         .masonry {
@@ -397,22 +471,29 @@ export default function GalleryPage() {
           font-size: 0.95rem;
         }
 
+        /* ============================================ */
+        /* UPDATED: Fully responsive lightbox / popup */
+        /* ============================================ */
         .lightbox-backdrop {
           position: fixed;
           inset: 0;
           z-index: 1000;
           background: rgba(2,8,23,0.72);
-          display: grid;
-          place-items: center;
+          display: flex;
+          align-items: safe center;
+          justify-content: center;
           padding: 18px;
+          overflow-y: auto;            /* scroll when content is taller than screen */
         }
         .lightbox {
           width: min(1100px, 100%);
+          max-height: calc(100vh - 36px);  /* ensures it doesn’t force backdrop to scroll strangely */
+          display: flex;
+          flex-direction: column;
           border-radius: 28px;
           border: 1px solid ${theme.border};
           background: #fff;
           box-shadow: 0 30px 100px rgba(2,8,23,0.35);
-          overflow: hidden;
         }
         .lightbox-header {
           display: flex;
@@ -420,11 +501,15 @@ export default function GalleryPage() {
           justify-content: space-between;
           gap: 12px;
           padding: 14px 14px 0;
+          flex-shrink: 0;
         }
         .lightbox-body {
           padding: 14px;
-          display: grid;
+          display: flex;
+          flex-direction: column;
           gap: 12px;
+          flex: 1;
+          overflow-y: auto;            /* inner scrolling if needed */
         }
         .lightbox-stage {
           border-radius: 22px;
@@ -432,6 +517,8 @@ export default function GalleryPage() {
           overflow: hidden;
           background: ${theme.bg};
         }
+
+        /* image inside stage */
         .lightbox-stage img {
           width: 100%;
           height: min(70vh, 640px);
@@ -440,12 +527,68 @@ export default function GalleryPage() {
           transform-origin: center center;
         }
 
+        /* video wrapper for responsive embed */
+        .video-responsive {
+          position: relative;
+          padding-top: 56.25%; /* 16:9 */
+          width: 100%;
+        }
+        .video-responsive iframe {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border: 0;
+        }
+
+        /* hide site header while lightbox is visible */
         .gallery-lightbox-open header,
         .gallery-lightbox-open .site-header,
         .gallery-lightbox-open #site-header {
           display: none !important;
         }
 
+        /* ----------------------- */
+        /* mobile responsiveness */
+        /* ----------------------- */
+        @media (max-width: 640px) {
+          .lightbox-backdrop {
+            padding: 10px;
+          }
+          .lightbox {
+            border-radius: 20px;
+            max-height: calc(100vh - 20px);
+          }
+          .lightbox-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px 10px 0;
+          }
+          .lightbox-header h3 {
+            font-size: 1.3rem !important;
+          }
+          .lightbox-actions {
+            width: 100%;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 6px;
+          }
+          .lightbox-body {
+            padding: 10px;
+          }
+          .lightbox-stage img {
+            height: min(50vh, 320px) !important;
+          }
+          .button {
+            min-height: 40px;
+            padding: 0 14px;
+            font-size: 0.85rem;
+          }
+        }
+
+        /* Adjust masonry and mosaic for smaller screens */
         @media (max-width: 1180px) {
           .gallery-mosaic { grid-template-columns: 1fr 1fr !important; }
           .mos-span-7, .mos-span-5 { grid-column: auto !important; }
@@ -461,534 +604,325 @@ export default function GalleryPage() {
         }
       `}</style>
 
-      {/* 3. Featured Highlights Section */}
-      <AnimatedSection style={s.sectionBand}>
-        <div style={s.sectionShell} ref={refs.featured}>
-          <div style={s.sectionHead}>
-            <p style={s.eyebrow}>Featured Highlights</p>
+      <main style={s.main}>
+        {/* 4. Image & Video Gallery Grid (Masonry) */}
+        <AnimatedSection style={{ ...s.sectionBand, background: theme.white }}>
+          <div style={s.sectionShell}>
+            <div style={s.sectionHead}>
+              <span style={s.eyebrow}>Gallery</span>
+              <h2 style={s.h2}>Images + videos</h2>
+              <p style={s.p}>Hover zoom, captions, and full-screen viewing.</p>
+            </div>
 
-            <p style={s.p}>
-              Operation theatre, advanced machines, and doctors at work
-              (carousel-ready layout).
-            </p>
-          </div>
-
-          <div style={s.mosaic} className="gallery-mosaic">
-            {mediaItems
-              .filter((x) => x.featured)
-              .slice(0, 3)
-              .map((item, idx) => {
-                const isLarge = idx === 0;
-                const bgAccent = item.accent || "rgba(14,165,233,0.18)";
-                return (
-                  <article
-                    key={item.id}
-                    className={`gallery-card hover-card ${
-                      isLarge ? "mos-span-7" : "mos-span-5"
-                    }`}
-                    style={{
-                      ...s.card,
-                      ...s.galleryCard,
-                      background: `linear-gradient(180deg, transparent 0%, rgba(2,8,23,0.70) 72%), radial-gradient(circle at top left, ${bgAccent}55, transparent 36%), linear-gradient(160deg, rgba(255,255,255,0.96), rgba(248,250,252,0.92))`,
-                      cursor: "pointer",
-                    }}
-                    onClick={() => {
-                      const idxInAll = filteredMedia.findIndex(
-                        (x) => x.id === item.id,
-                      );
-                      if (idxInAll >= 0) setLightboxIndex(idxInAll);
-                    }}
-                  >
-                    <span style={{ ...s.miniLabel, color: "#fff" }}>
-                      {item.category}
-                    </span>
-                    <h3
-                      style={{
-                        ...s.h2,
-                        fontSize: "1.42rem",
-                        marginTop: "10px",
-                        color: "#fff",
-                      }}
-                    >
-                      {item.title}
-                    </h3>
-                    <p
-                      style={{
-                        ...s.p,
-                        margin: "5px 0 0",
-                        fontSize: "0.95rem",
-                        color: "rgba(255,255,255,0.82)",
-                      }}
-                    >
-                      {item.caption}
-                    </p>
-                  </article>
-                );
-              })}
-          </div>
-        </div>
-      </AnimatedSection>
-
-      {/* 4. Image & Video Gallery Grid (Masonry) */}
-      <AnimatedSection style={{ ...s.sectionBand, background: theme.white }}>
-        <div style={s.sectionShell} ref={refs.grid}>
-          <div style={s.sectionHead}>
-            <p style={s.eyebrow}>Gallery</p>
-            <h2 style={s.h2}>Images + videos</h2>
-            <p style={s.p}>Hover zoom, captions, and full-screen viewing.</p>
-          </div>
-
-          <div className="masonry">
-            {filteredMedia.map((item, idx) => (
-              <div className="masonry-item" key={item.id}>
-                <div
-                  className="media-tile hover-card"
-                  onClick={() => setLightboxIndex(idx)}
-                  role="button"
-                  tabIndex={0}
-                >
+            <div className="masonry">
+              {filteredMedia.map((item, idx) => (
+                <div className="masonry-item" key={item.id}>
                   <div
-                    className="media-thumb"
-                    style={{ height: item.type === "video" ? 200 : 260 }}
+                    className="media-tile hover-card"
+                    onClick={() => setLightboxIndex(idx)}
+                    role="button"
+                    tabIndex={0}
                   >
-                    {item.type === "image" ? (
-                      item.src ? (
-                        <img src={item.src} alt={item.title} loading="lazy" />
+                    <div
+                      className="media-thumb"
+                      style={{ height: item.type === "video" ? 200 : 260 }}
+                    >
+                      {item.type === "image" ? (
+                        item.src ? (
+                          <img src={item.src} alt={item.title} loading="lazy" />
+                        ) : (
+                          <div style={{ padding: 18, textAlign: "center" }}>
+                            Image placeholder
+                          </div>
+                        )
                       ) : (
                         <div style={{ padding: 18, textAlign: "center" }}>
-                          Image placeholder
+                          Video thumbnail placeholder
+                          <div style={{ marginTop: 10, opacity: 0.9 }}>▶</div>
                         </div>
-                      )
-                    ) : (
-                      <div style={{ padding: 18, textAlign: "center" }}>
-                        Video thumbnail placeholder
-                        <div style={{ marginTop: 10, opacity: 0.9 }}>▶</div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
 
-                  <div className="media-meta">
-                    <strong>{item.title}</strong>
-                    <span>{item.caption}</span>
-                    <div
-                      style={{
-                        marginTop: 10,
-                        display: "flex",
-                        gap: 10,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <span style={{ ...s.miniLabel, margin: 0 }}>
-                        {item.category}
-                      </span>
-                      {item.tags?.slice(0, 2).map((t) => (
-                        <span
-                          key={t}
-                          style={{ color: theme.slate, fontSize: "0.9rem" }}
-                        >
-                          #{t}
+                    <div className="media-meta">
+                      <strong>{item.title}</strong>
+                      <span>{item.caption}</span>
+                      <div
+                        style={{
+                          marginTop: 10,
+                          display: "flex",
+                          gap: 10,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span style={{ ...s.miniLabel, margin: 0 }}>
+                          {item.category}
                         </span>
-                      ))}
+                        {item.tags?.slice(0, 2).map((t) => (
+                          <span
+                            key={t}
+                            style={{ color: theme.slate, fontSize: "0.9rem" }}
+                          >
+                            #{t}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredMedia.length === 0 && (
-            <div style={{ ...s.card, marginTop: 18 }}>
-              <h3 style={{ ...s.h3, margin: 0 }}>No results found.</h3>
-              <p style={s.p}>
-                Add images/videos to your gallery data and they will show here.
-              </p>
+              ))}
             </div>
-          )}
-        </div>
-      </AnimatedSection>
 
-      {/* 5. Lightbox / Fullscreen Viewer */}
-      {lightboxItem && (
-        <div
-          className="lightbox-backdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Gallery viewer"
-          onClick={closeLightbox}
-        >
-          <div className="lightbox" onClick={(e) => e.stopPropagation()}>
-            <div className="lightbox-header">
-              <div>
-                <div style={s.eyebrow}>{lightboxItem.category}</div>
-                <h3 style={{ ...s.h2, fontSize: "2rem" }}>
-                  {lightboxItem.title}
-                </h3>
-                <p style={{ ...s.p, marginTop: 8 }}>
-                  {lightboxItem.description}
+            {filteredMedia.length === 0 && (
+              <div style={{ ...s.card, marginTop: 18 }}>
+                <h3 style={{ ...s.h3, margin: 0 }}>No results found.</h3>
+                <p style={s.p}>
+                  Add images/videos to your gallery data and they will show here.
                 </p>
               </div>
+            )}
+          </div>
+        </AnimatedSection>
 
-              <div
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  flexWrap: "wrap",
-                  justifyContent: "flex-end",
-                }}
-              >
-                <button
-                  className="button button-ghost"
-                  type="button"
-                  onClick={() => setZoom((z) => Math.max(1, z - 0.25))}
-                >
-                  Zoom -
-                </button>
-                <button
-                  className="button button-ghost"
-                  type="button"
-                  onClick={() => setZoom((z) => Math.min(2.5, z + 0.25))}
-                >
-                  Zoom +
-                </button>
-                <button
-                  className="button button-secondary"
-                  type="button"
-                  onClick={prevLightbox}
-                >
-                  Prev
-                </button>
-                <button
-                  className="button button-secondary"
-                  type="button"
-                  onClick={nextLightbox}
-                >
-                  Next
-                </button>
-                <button
-                  className="button button-ghost"
-                  type="button"
-                  onClick={closeLightbox}
-                >
-                  Close
-                </button>
+        {/* 5. Lightbox / Fullscreen Viewer (responsive) */}
+        {lightboxItem && (
+          <div
+            className="lightbox-backdrop"
+            onClick={closeLightbox}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="lightbox" onClick={(e) => e.stopPropagation()}>
+              {/* header */}
+              <div className="lightbox-header">
+                <div>
+                  <span style={s.eyebrow}>{lightboxItem.category}</span>
+                  <h3 style={{ ...s.h2, fontSize: "2rem", margin: 0 }}>
+                    {lightboxItem.title}
+                  </h3>
+                  <p style={{ ...s.p, marginTop: 8 }}>
+                    {lightboxItem.description}
+                  </p>
+                </div>
+                {/* actions row (zoom, prev, next, close) */}
+                <div className="lightbox-actions" style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                  <button
+                    className="button button-ghost"
+                    type="button"
+                    onClick={() => setZoom((z) => Math.max(1, z - 0.25))}
+                  >
+                    Zoom -
+                  </button>
+                  <button
+                    className="button button-ghost"
+                    type="button"
+                    onClick={() => setZoom((z) => Math.min(2.5, z + 0.25))}
+                  >
+                    Zoom +
+                  </button>
+                  <button
+                    className="button button-secondary"
+                    type="button"
+                    onClick={prevLightbox}
+                  >
+                    Prev
+                  </button>
+                  <button
+                    className="button button-secondary"
+                    type="button"
+                    onClick={nextLightbox}
+                  >
+                    Next
+                  </button>
+                  <button
+                    className="button button-ghost"
+                    type="button"
+                    onClick={closeLightbox}
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="lightbox-body">
-              <div className="lightbox-stage">
-                {lightboxItem.type === "image" ? (
-                  lightboxItem.src ? (
-                    <img
-                      src={lightboxItem.src}
-                      alt={lightboxItem.title}
-                      style={{ transform: `scale(${zoom})` }}
-                    />
+              {/* body */}
+              <div className="lightbox-body">
+                <div className="lightbox-stage">
+                  {lightboxItem.type === "image" ? (
+                    lightboxItem.src ? (
+                      <img
+                        src={lightboxItem.src}
+                        alt={lightboxItem.title}
+                        style={{ transform: `scale(${zoom})` }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          height: 420,
+                          display: "grid",
+                          placeItems: "center",
+                          color: theme.slate,
+                        }}
+                      >
+                        Image placeholder
+                      </div>
+                    )
                   ) : (
-                    <div
-                      style={{
-                        height: 420,
-                        display: "grid",
-                        placeItems: "center",
-                        color: theme.slate,
-                      }}
-                    >
-                      Image placeholder
+                    <div className="video-responsive">
+                      <iframe
+                        src={lightboxItem.videoUrl}
+                        title={lightboxItem.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        loading="lazy"
+                      />
                     </div>
-                  )
-                ) : (
-                  <div style={{ borderRadius: 22, overflow: "hidden" }}>
-                    <iframe
-                      width="100%"
-                      height="520"
-                      src={lightboxItem.videoUrl}
-                      title={lightboxItem.title}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <span style={{ ...s.cardCode, minWidth: "auto" }}>
-                  {lightboxIndex + 1}/{filteredMedia.length}
-                </span>
-                {(lightboxItem.tags || []).slice(0, 6).map((t) => (
-                  <span key={t} style={{ color: theme.slate }}>
-                    #{t}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 6. Before & After Section (slider comparison) */}
-      <AnimatedSection style={s.sectionBand}>
-        <div style={s.sectionShell} ref={refs.beforeAfter}>
-          <div style={s.sectionHead}>
-            <p style={s.eyebrow}>Before & After Results</p>
-
-            <p style={s.p}>
-              Drag the slider to compare. Add real patient outcomes only if you
-              have consent and compliance approval.
-            </p>
-          </div>
-
-          <div className="hover-card" style={{ ...s.card, marginTop: 22 }}>
-            <div style={{ display: "grid", gap: 12 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  flexWrap: "wrap",
-                }}
-              >
-                <strong style={{ color: theme.navy }}>
-                  Comparison slider (demo)
-                </strong>
-                <span style={{ color: theme.slate }}>
-                  Drag: {compareValue}%
-                </span>
-              </div>
-
-              <div
-                style={{
-                  position: "relative",
-                  borderRadius: 22,
-                  overflow: "hidden",
-                  border: `1px solid ${theme.border}`,
-                  background: theme.bg,
-                  height: 360,
-                }}
-              >
-                {/* BEFORE */}
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    display: "grid",
-                    placeItems: "center",
-                    color: theme.slate,
-                  }}
-                >
-                  Before image placeholder
+                  )}
                 </div>
 
-                {/* AFTER overlay */}
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <span style={{ ...s.cardCode, minWidth: "auto" }}>
+                    {lightboxIndex + 1}/{filteredMedia.length}
+                  </span>
+                  {(lightboxItem.tags || []).slice(0, 6).map((t) => (
+                    <span key={t} style={{ color: theme.slate }}>
+                      #{t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 6. Before & After Section (slider comparison) */}
+        <AnimatedSection style={s.sectionBand}>
+          <div style={s.sectionShell}>
+            <div style={s.sectionHead}>
+              <span style={s.eyebrow}>Outcomes</span>
+              <h2 style={s.h2}>Before & After Results</h2>
+              <p style={s.p}>
+                Drag the slider to compare. Add real patient outcomes only if you
+                have consent and compliance approval.
+              </p>
+            </div>
+
+            <div className="hover-card" style={{ ...s.card, marginTop: 22 }}>
+              <div style={{ display: "grid", gap: 12 }}>
                 <div
                   style={{
-                    position: "absolute",
-                    inset: 0,
-                    width: `${compareValue}%`,
-                    overflow: "hidden",
-                    background: "rgba(14,165,233,0.08)",
-                    borderRight: "2px solid rgba(14,165,233,0.55)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    flexWrap: "wrap",
                   }}
                 >
+                  <strong style={{ color: theme.navy }}>
+                    Comparison slider (demo)
+                  </strong>
+                  <span style={{ color: theme.slate }}>
+                    Drag: {compareValue}%
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    position: "relative",
+                    borderRadius: 22,
+                    overflow: "hidden",
+                    border: `1px solid ${theme.border}`,
+                    background: theme.bg,
+                    height: 360,
+                  }}
+                >
+                  {/* BEFORE */}
                   <div
                     style={{
-                      height: "100%",
+                      position: "absolute",
+                      inset: 0,
                       display: "grid",
                       placeItems: "center",
-                      color: theme.skyHover,
-                      fontWeight: 900,
+                      color: theme.slate,
                     }}
                   >
-                    After image placeholder
+                    Before image placeholder
                   </div>
-                </div>
 
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={compareValue}
-                  onChange={(e) => setCompareValue(Number(e.target.value))}
-                  style={{
-                    position: "absolute",
-                    left: 10,
-                    right: 10,
-                    bottom: 14,
-                  }}
-                  aria-label="Before after slider"
-                />
-              </div>
-
-              <p style={{ ...s.p, marginTop: 0, fontSize: "0.95rem" }}>
-                Disclaimer: Results vary by patient. Visual outcomes depend on
-                candidacy, eye anatomy, and clinical follow-up.
-              </p>
-            </div>
-          </div>
-        </div>
-      </AnimatedSection>
-
-      {/* 7. Video Showcase */}
-      <AnimatedSection style={{ ...s.sectionBand, background: theme.white }}>
-        <div style={s.sectionShell} ref={refs.videos}>
-          <div style={s.sectionHead}>
-            <p style={s.eyebrow}>Video Showcase</p>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gap: 20,
-              marginTop: 22,
-              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-            }}
-            className="dual-panel"
-          >
-            {mediaItems
-              .filter((x) => x.type === "video")
-              .slice(0, 2)
-              .map((v) => (
-                <article
-                  key={v.id}
-                  className="hover-card"
-                  style={{ ...s.card, padding: 18 }}
-                >
-                  <h3 style={{ ...s.h3, marginTop: 0 }}>{v.title}</h3>
-                  <p style={{ ...s.p, marginTop: 8 }}>{v.caption}</p>
+                  {/* AFTER overlay */}
                   <div
                     style={{
-                      marginTop: 12,
-                      borderRadius: 22,
+                      position: "absolute",
+                      inset: 0,
+                      width: `${compareValue}%`,
                       overflow: "hidden",
-                      border: `1px solid ${theme.border}`,
+                      background: "rgba(14,165,233,0.08)",
+                      borderRight: "2px solid rgba(14,165,233,0.55)",
                     }}
                   >
-                    <iframe
-                      width="100%"
-                      height="420"
-                      src={v.videoUrl}
-                      title={v.title}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      loading="lazy"
-                    />
+                    <div
+                      style={{
+                        height: "100%",
+                        display: "grid",
+                        placeItems: "center",
+                        color: theme.skyHover,
+                        fontWeight: 900,
+                      }}
+                    >
+                      After image placeholder
+                    </div>
                   </div>
-                </article>
-              ))}
-          </div>
-        </div>
-      </AnimatedSection>
 
-      {/* 8. Behind the Scenes */}
-      <AnimatedSection style={s.sectionBand}>
-        <div style={s.sectionShell} ref={refs.behind}>
-          <div style={s.sectionHead}>
-            <p style={s.eyebrow}>Behind the Scenes</p>
-            <h2 style={s.h2}>Humanize the clinic.</h2>
-            <p style={s.p}>
-              Daily operations, teamwork, and preparation—trust-building
-              content.
-            </p>
-          </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={compareValue}
+                    onChange={(e) => setCompareValue(Number(e.target.value))}
+                    style={{
+                      position: "absolute",
+                      left: 10,
+                      right: 10,
+                      bottom: 14,
+                    }}
+                    aria-label="Before after slider"
+                  />
+                </div>
 
-          <div
-            style={{
-              display: "grid",
-              gap: 20,
-              marginTop: 22,
-              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-            }}
-            className="grid-3"
-          >
-            {[
-              "Doctors preparing",
-              "Staff collaboration",
-              "Daily operations",
-            ].map((x, i) => (
-              <article
-                key={x}
-                className="hover-card"
-                style={{ ...s.card, minHeight: 220 }}
-              >
-                <span style={s.cardCode}>{`0${i + 1}`}</span>
-                <h3 style={{ ...s.h3 }}>{x}</h3>
-                <p style={s.p}>
-                  Add candid images/videos here to build emotional reassurance.
+                <p style={{ ...s.p, marginTop: 0, fontSize: "0.95rem" }}>
+                  Disclaimer: Results vary by patient. Visual outcomes depend on
+                  candidacy, eye anatomy, and clinical follow-up.
                 </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </AnimatedSection>
-
-      {/* 9. Technology in Action */}
-      <AnimatedSection style={{ ...s.sectionBand, background: theme.white }}>
-        <div style={s.sectionShell} ref={refs.techAction}>
-          <div style={s.sectionHead}>
-            <p style={s.eyebrow}>Technology in Action</p>
-            <h2 style={s.h2}>Premium positioning.</h2>
-            <p style={s.p}>
-              Show machines being used in diagnostics and procedures.
-            </p>
-          </div>
-
-          <div className="hover-card" style={{ ...s.card, marginTop: 22 }}>
-            <h3 style={{ ...s.h3, marginTop: 0 }}>
-              See the equipment behind the outcomes
-            </h3>
-            <p style={s.p}>
-              Link this section to your Technology page for deeper
-              trust-building.
-            </p>
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                flexWrap: "wrap",
-                marginTop: 16,
-              }}
-            >
-              <Link className="button button-primary" to="/technology">
-                Explore Technology
-              </Link>
-              <Link className="button button-secondary" to="/appointment">
-                Book Diagnostics
-              </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </AnimatedSection>
+        </AnimatedSection>
 
-      {/* 12. CTA Section */}
-      <AnimatedSection style={{ ...s.sectionBand, marginBottom: "60px" }}>
-        <div style={s.sectionShell} ref={refs.cta}>
-          <div className="cta-banner">
-            <div style={{ maxWidth: "720px" }}>
-              <p style={s.eyebrow}>Conversion</p>
-              <h1 style={{ color: "#fff" }}>
-                Experience our advanced eye care facility firsthand
-              </h1>
-              <p style={{ ...s.p, color: "rgba(255,255,255,0.75)" }}>
-                Book an appointment or schedule a visit—our team will guide your
-                next step.
-              </p>
-            </div>
-            <div
-              style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}
-              className="cta-actions"
-            >
-              <Link className="button button-primary" to="/appointment">
-                Book Appointment
-              </Link>
-              <Link className="button button-secondary" to="/contact">
-                Schedule Visit
-              </Link>
+        {/* 12. CTA Section */}
+        <AnimatedSection style={{ ...s.sectionBand, marginBottom: "60px" }}>
+          <div style={s.sectionShell}>
+            <div className="cta-banner">
+              <div style={{ maxWidth: "720px" }}>
+                <span style={{ ...s.eyebrow, background: "rgba(255,255,255,0.10)", color: "#fff", borderColor: "rgba(255,255,255,0.18)" }}>
+                  Conversion
+                </span>
+                <h1 style={{ color: "#fff" }}>
+                  Experience our advanced eye care facility firsthand
+                </h1>
+                <p style={{ ...s.p, color: "rgba(255,255,255,0.75)" }}>
+                  Book an appointment or schedule a visit—our team will guide your next step.
+                </p>
+                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: 24 }} className="cta-actions">
+                  <Link to="/book-appointment" className="button button-primary">
+                    Book Appointment
+                  </Link>
+                  <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="button button-secondary">
+                    WhatsApp
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </AnimatedSection>
-    </main>
+        </AnimatedSection>
+      </main>
+    </>
   );
 }

@@ -1,1557 +1,932 @@
+import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useRef, useState } from "react";
+import { usePublicSite } from "../hooks/PublicSiteContext";
 
-// ─── Inline replacements for missing components ──────────────────────────────
-function AnimatedSection({ children, style }) {
-  return <section style={style}>{children}</section>;
-}
-function FaqAccordion({ items }) {
-  const [open, setOpen] = useState(null);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-      {items.map((item, i) => (
-        <div
-          key={i}
-          style={{
-            border: "1px solid #e2e8f0",
-            borderRadius: "16px",
-            overflow: "hidden",
-            background: "#fff",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-          }}
-        >
-          <button
-            onClick={() => setOpen(open === i ? null : i)}
-            style={{
-              width: "100%",
-              padding: "20px 24px",
-              textAlign: "left",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              fontFamily: "'DM Serif Display', serif",
-              fontSize: "1.05rem",
-              color: "#1a2e44",
-              fontWeight: 600,
-            }}
-          >
-            {item.question}
-            <span
-              style={{
-                width: "28px",
-                height: "28px",
-                borderRadius: "50%",
-                background: open === i ? "#0ea5e9" : "#f0f7ff",
-                color: open === i ? "#fff" : "#0ea5e9",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "1.1rem",
-                flexShrink: 0,
-                transition: "all 0.25s",
-              }}
-            >
-              {open === i ? "−" : "+"}
-            </span>
-          </button>
-          {open === i && (
-            <div
-              style={{
-                padding: "0 24px 20px",
-                color: "#64748b",
-                lineHeight: 1.7,
-                fontSize: "0.97rem",
-              }}
-            >
-              {item.answer}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+};
 
-// ─── Static data ──────────────────────────────────────────────────────────────
-const doctors = [
-  {
-    name: "Dr. Sarah Mitchell",
-    role: "Cataract & Refractive Surgeon",
-    initials: "SM",
-    bio: "15+ years of expertise in premium lens implants and laser vision correction.",
-  },
-  {
-    name: "Dr. James Okafor",
-    role: "Retina Specialist",
-    initials: "JO",
-    bio: "Specialist in macular degeneration, diabetic retinopathy, and retinal surgery.",
-  },
-  {
-    name: "Dr. Priya Nair",
-    role: "Glaucoma & Cornea",
-    initials: "PN",
-    bio: "Expert in glaucoma management and corneal disease across all age groups.",
-  },
-  {
-    name: "Dr. Tom Elliot",
-    role: "Pediatric Ophthalmology",
-    initials: "TE",
-    bio: "Gentle, family-focused care for children's vision development and myopia.",
-  },
-];
+const stagger = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
 
-const marqueeItems = [
-  "LASIK & SMILE",
-  "Cataract Surgery",
-  "Retina Care",
-  "Glaucoma",
-  "Pediatric Eye Care",
-  "Premium Lens Options",
-  "Same-Day Diagnostics",
-  "Advanced OCT Imaging",
-];
-
-const homeFaq = [
-  {
-    question: "Is LASIK safe?",
-    answer:
-      "LASIK is widely performed and considered safe for most patients. Safety depends on corneal thickness, prescription range, and candidacy determined by your eye specialist.",
-  },
-  {
-    question: "How do I book an appointment?",
-    answer:
-      "Use the booking widget on this page or tap. Choose a service, doctor, and preferred time — we'll confirm quickly.",
-  },
-  {
-    question: "What is the cost of treatment?",
-    answer:
-      "Costs vary by service and individual clinical needs. Request a consultation and we'll share a transparent estimate with all available options.",
-  },
-];
-
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function HomePage() {
-  const EMERGENCY_PHONE = "+0000000000";
-  const PRIMARY_PHONE = "+0000000000";
+  const { services, doctors, loading, settings } = usePublicSite();
+  const heroRef = useRef(null);
+  const isHeroVisible = useInView(heroRef, { once: true, margin: "-100px" });
+
+  const activeServices = (services || [])
+    .filter((s) => s.active !== false)
+    .slice(0, 6);
+
+  // Changed from 4 to 6 so the scrollable area is utilized better
+  const activeDoctors = (doctors || [])
+    .filter((d) => d.active !== false)
+    .slice(0, 6);
+
+  const primaryPhone = settings?.phone || "+0000000000";
 
   const theme = {
     sky: "#0ea5e9",
-    skyLight: "#e0f2fe",
+    skyHover: "#0284c7",
     skyMid: "#38bdf8",
+    skyLight: "#e0f2fe",
+    bg: "#f8fafc",
+    white: "#ffffff",
     navy: "#1a2e44",
     navyMid: "#2d4a6b",
     slate: "#64748b",
-    light: "#f8fafc",
-    white: "#ffffff",
     border: "#e2e8f0",
     borderLight: "#f1f5f9",
     radius: "20px",
     radiusLG: "28px",
+    radiusXL: "36px",
     shadow: "0 4px 24px rgba(14,165,233,0.08), 0 1px 4px rgba(0,0,0,0.06)",
     shadowHover:
       "0 12px 40px rgba(14,165,233,0.15), 0 2px 8px rgba(0,0,0,0.08)",
     container: "min(1440px, calc(100% - 32px))",
   };
 
-  const services = [
+  const values = [
     {
-      id: "01",
-      title: "Cataract Surgery",
-      description:
-        "Premium lens options with calm, guided surgical planning and expert aftercare.",
-      icon: "👁",
-    },
-    {
-      id: "02",
-      title: "LASIK / SMILE",
-      description:
-        "Modern laser correction with candidacy-led safety checks and clear outcomes.",
-      icon: "✦",
-    },
-    {
-      id: "03",
-      title: "Retina Care",
-      description:
-        "Monitoring, injections, and long-term retinal condition management.",
-      icon: "◎",
-    },
-    {
-      id: "04",
-      title: "Glaucoma",
-      description:
-        "Pressure control, advanced diagnostics, and progression tracking.",
-      icon: "◈",
-    },
-    {
-      id: "05",
-      title: "Pediatric Eye Care",
-      description:
-        "Gentle family care: screening, myopia control, and vision development.",
-      icon: "✿",
-    },
-    {
-      id: "06",
-      title: "Dry Eye Clinic",
-      description:
-        "Personalised therapy plans for chronic dry eye and ocular surface health.",
-      icon: "◉",
-    },
-  ];
-
-  const whyChooseUs = [
-    {
-      id: "01",
+      icon: "🔬",
       title: "Advanced Technology",
-      copy: "Modern diagnostics and surgical systems for precision-led care with better outcomes.",
+      desc: "Modern diagnostics and surgical precision.",
     },
     {
-      id: "02",
-      title: "Experienced Specialists",
-      copy: "Board-certified ophthalmologists across cataract, retina, refractive, and family eye care.",
+      icon: "👨‍⚕️",
+      title: "Expert Specialists",
+      desc: "Board‑certified, fellowship‑trained doctors.",
     },
     {
-      id: "03",
-      title: "High Success Rate",
-      copy: "Outcome-focused planning, rigorous safety checks, and consistent follow-up at every step.",
+      icon: "❤️",
+      title: "Compassionate Care",
+      desc: "Clear communication and patient‑first approach.",
     },
     {
-      id: "04",
-      title: "Transparent Pricing",
-      copy: "Clear fee structures, insurance guidance, and flexible payment options explained upfront.",
-    },
-    {
-      id: "05",
-      title: "Concierge Experience",
-      copy: "From first message to post-procedure support — a calm, patient-first journey.",
-    },
-    {
-      id: "06",
-      title: "Same-Day Diagnostics",
-      copy: "Fast front door for urgent visual complaints, surgery enquiries, and retina reviews.",
+      icon: "⭐",
+      title: "Proven Outcomes",
+      desc: "Consistently high success rates and safety.",
     },
   ];
 
-  const techShowcase = [
+  const faq = [
     {
-      id: "01",
-      title: "OCT & Advanced Imaging",
-      copy: "High-resolution retinal imaging for earlier, clearer clinical decisions.",
+      q: "How do I book an appointment?",
+      a: "Use the booking widget or call us. We’ll confirm your slot within hours.",
     },
     {
-      id: "02",
-      title: "Modern Surgical Systems",
-      copy: "Precision instruments and protocols built for safer, more predictable outcomes.",
+      q: "Is LASIK painful?",
+      a: "Most patients experience minimal discomfort. Modern techniques ensure a smooth procedure.",
     },
     {
-      id: "03",
-      title: "Laser Correction Planning",
-      copy: "Candidacy-first evaluation and personalised refractive options for every patient.",
+      q: "Do you accept insurance?",
+      a: "Yes, we work with major insurers. Our team will help verify coverage.",
     },
   ];
 
-  const blogPreview = [
-    {
-      id: "01",
-      title: "Is LASIK right for you?",
-      excerpt:
-        "Key eligibility factors, safety checks, and what to expect during evaluation.",
-      tag: "Refractive",
-    },
-    {
-      id: "02",
-      title: "Cataract surgery lens options",
-      excerpt:
-        "A clear breakdown of lens types and how we match them to your lifestyle.",
-      tag: "Cataracts",
-    },
-    {
-      id: "03",
-      title: "When to see a retina specialist",
-      excerpt:
-        "Symptoms you shouldn't ignore and how monitoring helps prevent vision loss.",
-      tag: "Retina",
-    },
-  ];
-
-  const stats = [
-    { value: "15,000+", label: "Procedures completed" },
-    { value: "98%", label: "Patient satisfaction" },
-    { value: "20+", label: "Years of experience" },
-    { value: "8", label: "Specialist surgeons" },
-  ];
-
-  const insurancePartners = [
-    "Aetna",
-    "Cigna",
-    "Bupa",
-    "Medicare",
-    "MetLife",
-    "United",
-  ];
-
-  const [booking, setBooking] = useState({
-    service: "",
-    doctor: "",
-    date: "",
-    name: "",
-    phone: "",
-  });
-  const onBookingChange = (key) => (e) =>
-    setBooking((p) => ({ ...p, [key]: e.target.value }));
-  const onBookingSubmit = (e) => {
-    e.preventDefault();
-    window.location.href = "/appointment";
+  const getInitials = (name) => {
+    if (!name) return "DR";
+    const parts = name.split(" ");
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
   };
 
-  const eyebrow = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    padding: "6px 14px",
-    borderRadius: "999px",
-    background: theme.skyLight,
-    color: theme.sky,
-    fontSize: "0.78rem",
-    fontWeight: 700,
-    letterSpacing: "0.1em",
-    textTransform: "uppercase",
-    marginBottom: "16px",
-  };
-
-  const h2Style = {
-    fontFamily: "'DM Serif Display', serif",
-    fontSize: "clamp(2rem, 3.5vw, 3.2rem)",
-    color: theme.navy,
-    lineHeight: 1.1,
-    letterSpacing: "-0.02em",
-    margin: "0 0 16px",
-  };
-
-  const bodyText = {
-    color: theme.slate,
-    lineHeight: 1.72,
-    fontSize: "1.02rem",
-    margin: 0,
-    maxWidth: "62ch",
-  };
-
-  const card = {
-    background: theme.white,
-    border: `1px solid ${theme.border}`,
-    borderRadius: theme.radius,
-    padding: "28px",
-    boxShadow: theme.shadow,
-    transition: "transform 0.25s ease, box-shadow 0.25s ease",
-  };
+  const [openFaq, setOpenFaq] = useState(null);
 
   return (
     <main
       style={{
-        fontFamily: "'Inter', system-ui, sans-serif",
-        background: "#f8fafc",
+        background: theme.bg,
         color: theme.navy,
+        fontFamily: "'Inter', system-ui, sans-serif",
+        overflowX: "hidden",
       }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap');
-
-        * { box-sizing: border-box; }
-
-        .hc:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 12px 40px rgba(14,165,233,0.15), 0 2px 8px rgba(0,0,0,0.08) !important;
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap');
+        .hover-lift { transition: transform 0.25s ease, box-shadow 0.25s ease; height: 100%; display: flex; flex-direction: column; }
+        .hover-lift:hover { transform: translateY(-8px); box-shadow: ${theme.shadowHover}; }
         .btn {
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
-          min-height: 50px;
-          padding: 0 26px;
-          border-radius: 999px;
-          font-weight: 600;
-          font-size: 0.95rem;
+          padding: 12px 28px;
+          border-radius: 40px;
+          font-weight: 700;
           text-decoration: none;
+          transition: all 0.2s;
           border: none;
           cursor: pointer;
-          transition: all 0.22s ease;
-          white-space: nowrap;
           font-family: 'Inter', system-ui;
         }
-        .btn:hover { transform: translateY(-2px); }
-        .btn-primary {
-          background: #0ea5e9;
-          color: #fff;
-          box-shadow: 0 8px 24px rgba(14,165,233,0.32);
-        }
-        .btn-primary:hover { background: #0284c7; box-shadow: 0 12px 32px rgba(14,165,233,0.40); }
-        .btn-outline {
-          background: #fff;
-          color: #0ea5e9;
-          border: 1.5px solid #0ea5e9;
-        }
-        .btn-outline:hover { background: #e0f2fe; }
-        .btn-ghost {
-          background: rgba(255,255,255,0.6);
-          color: #1a2e44;
-          border: 1.5px solid #e2e8f0;
-        }
-        .btn-ghost:hover { background: #fff; }
-
-        .input-field {
-          width: 100%;
-          min-height: 48px;
-          border-radius: 12px;
-          border: 1.5px solid #e2e8f0;
-          background: #f8fafc;
-          color: #1a2e44;
-          padding: 0 14px;
-          font-size: 0.95rem;
-          outline: none;
-          font-family: 'Inter', system-ui;
-          transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .input-field:focus {
-          border-color: #0ea5e9;
-          background: #fff;
-          box-shadow: 0 0 0 4px rgba(14,165,233,0.10);
-        }
-
-        .marquee-wrap { overflow: hidden; background: #0ea5e9; padding: 14px 0; }
-        .marquee-track {
+        .btn-primary { background: ${theme.sky}; color: white; box-shadow: 0 8px 20px rgba(14,165,233,0.3); }
+        .btn-primary:hover { background: ${theme.skyHover}; transform: translateY(-2px); }
+        .btn-outline { background: transparent; border: 1.5px solid ${theme.sky}; color: ${theme.sky}; }
+        .btn-outline:hover { background: ${theme.skyLight}; transform: translateY(-2px); }
+        .btn-ghost { background: rgba(255,255,255,0.7); border: 1.5px solid ${theme.border}; color: ${theme.navy}; }
+        .btn-ghost:hover { background: white; }
+        .grid-2 { display: grid; gap: 30px; grid-template-columns: repeat(2, 1fr); }
+        .grid-4 { display: grid; gap: 30px; grid-template-columns: repeat(4, 1fr); }
+        @media (max-width: 1024px) { .grid-2, .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .grid-2, .grid-4 { grid-template-columns: 1fr; } }
+        
+        /* SCROLLABLE CAROUSEL CLASSES */
+        .scroll-container {
           display: flex;
-          gap: 0;
-          animation: marquee 28s linear infinite;
-          width: max-content;
+          overflow-x: auto;
+          gap: 30px;
+          padding: 20px 10px 40px 10px; /* Padding accommodates hover shadow */
+          margin: -20px -10px 0;
+          scroll-snap-type: x mandatory;
+          scroll-behavior: smooth;
         }
-        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .marquee-item {
-          display: inline-flex;
-          align-items: center;
-          gap: 16px;
-          padding: 0 32px;
-          color: #fff;
-          font-weight: 600;
-          font-size: 0.88rem;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-          white-space: nowrap;
+        .scroll-container::-webkit-scrollbar {
+          height: 8px;
         }
-        .marquee-item::after { content: "✦"; opacity: 0.5; }
-
-        .hero-wave {
-          position: absolute;
-          bottom: -2px; left: 0; right: 0;
-          height: 80px;
-          background: #f8fafc;
-          clip-path: ellipse(56% 100% at 50% 100%);
+        .scroll-container::-webkit-scrollbar-track {
+          background: ${theme.borderLight};
+          border-radius: 10px;
         }
-
-        @media (max-width: 1100px) {
-          .hero-split { grid-template-columns: 1fr !important; }
-          .service-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .why-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .doc-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .book-grid { grid-template-columns: 1fr 1fr !important; }
+        .scroll-container::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
         }
-        @media (max-width: 640px) {
-          .service-grid, .why-grid, .doc-grid, .book-grid, .tech-grid, .blog-grid { grid-template-columns: 1fr !important; }
-          .stats-grid { grid-template-columns: 1fr 1fr !important; }
-          .action-bar { flex-direction: column !important; }
-          .hero-ctas { flex-direction: column !important; }
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+        .scroll-item {
+          flex: 0 0 calc(33.333% - 20px); /* 3 Items per row */
+          scroll-snap-align: start;
+          min-width: 320px;
+        }
+        @media (max-width: 1024px) {
+          .scroll-item { flex: 0 0 calc(50% - 15px); }
+        }
+        @media (max-width: 768px) {
+          .scroll-item { flex: 0 0 100%; min-width: unset; }
         }
       `}</style>
 
-      {/* ── HERO ───────────────────────────────────────────────────────────── */}
+      {/* ===== HERO SECTION ===== */}
       <section
+        ref={heroRef}
         style={{
           position: "relative",
+          padding: "120px 0 100px",
           background:
-            "linear-gradient(150deg, #e0f2fe 0%, #f0f9ff 40%, #ffffff 100%)",
-          padding: "80px 0 120px",
+            "linear-gradient(145deg, #e0f2fe 0%, #f0f9ff 50%, #ffffff 100%)",
           overflow: "hidden",
         }}
       >
-        {/* Decorative circles */}
-        <div
-          style={{
-            position: "absolute",
-            top: "-80px",
-            right: "-80px",
-            width: "500px",
-            height: "500px",
-            borderRadius: "50%",
-            background: "rgba(14,165,233,0.07)",
-            pointerEvents: "none",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            bottom: "40px",
-            left: "-60px",
-            width: "320px",
-            height: "320px",
-            borderRadius: "50%",
-            background: "rgba(14,165,233,0.05)",
-            pointerEvents: "none",
-          }}
-        />
-
         <div
           style={{
             width: theme.container,
             margin: "0 auto",
             position: "relative",
+            zIndex: 2,
           }}
         >
-          <div
-            className="hero-split"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1.1fr 0.9fr",
-              gap: "60px",
-              alignItems: "center",
-            }}
+          <motion.div
+            initial="hidden"
+            animate={isHeroVisible ? "visible" : "hidden"}
+            variants={fadeUp}
           >
-            {/* Left */}
-            <div>
-              <div style={eyebrow}>✦ Advanced Eye Care Centre</div>
-              <h1
-                style={{
-                  fontFamily: "'DM Serif Display', serif",
-                  fontSize: "clamp(2.8rem, 5vw, 5rem)",
-                  color: theme.navy,
-                  lineHeight: 1.05,
-                  letterSpacing: "-0.03em",
-                  margin: "0 0 20px",
-                }}
-              >
-                See the World <br />
-                <em style={{ color: theme.sky, fontStyle: "italic" }}>
-                  More Clearly.
-                </em>
-              </h1>
-              <p
-                style={{
-                  ...bodyText,
-                  fontSize: "1.1rem",
-                  marginBottom: "32px",
-                }}
-              >
-                Specialist-led care with modern diagnostics, premium surgical
-                pathways, and a calm patient experience — from first
-                consultation to confident recovery.
-              </p>
-
-              <div
-                className="hero-ctas"
-                style={{
-                  display: "flex",
-                  gap: "12px",
-                  flexWrap: "wrap",
-                  marginBottom: "40px",
-                }}
-              >
-                <Link className="btn btn-primary" to="/appointment">
-                  Book Appointment
-                </Link>
-                <Link className="btn btn-outline" to="/appointment">
-                  Free Consultation
-                </Link>
-                <Link className="btn btn-ghost" to="/services">
-                  View Services
-                </Link>
-              </div>
-
-              {/* Trust pills */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-                {[
-                  "Board-certified specialists",
-                  "Advanced diagnostics",
-                  "15,000+ procedures",
-                ].map((x) => (
-                  <span
-                    key={x}
-                    style={{
-                      padding: "8px 16px",
-                      borderRadius: "999px",
-                      background: "#fff",
-                      border: `1px solid ${theme.border}`,
-                      color: theme.navyMid,
-                      fontSize: "0.85rem",
-                      fontWeight: 600,
-                      boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                    }}
-                  >
-                    ✓ {x}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Right — trust cards */}
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "16px",
-              }}
+              className="grid-2"
+              style={{ alignItems: "center", gap: "40px" }}
             >
-              {[
-                { label: "ISO Certified", sub: "Quality & safety", icon: "🏅" },
-                { label: "5★ Reviews", sub: "2,400+ patients", icon: "⭐" },
-                {
-                  label: "Same-Day Care",
-                  sub: "Urgent slots available",
-                  icon: "🕐",
-                },
-                { label: "Advanced Tech", sub: "Latest equipment", icon: "🔬" },
-              ].map((x) => (
-                <div
-                  key={x.label}
-                  className="hc"
+              <div>
+                <span
                   style={{
-                    ...card,
-                    padding: "22px",
-                    textAlign: "center",
-                    borderTop: `3px solid ${theme.sky}`,
+                    background: theme.skyLight,
+                    padding: "6px 14px",
+                    borderRadius: "40px",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    color: theme.sky,
+                    display: "inline-block",
+                    marginBottom: "20px",
                   }}
                 >
-                  <div style={{ fontSize: "1.8rem", marginBottom: "10px" }}>
-                    {x.icon}
-                  </div>
-                  <div
-                    style={{
-                      fontWeight: 700,
-                      color: theme.navy,
-                      fontSize: "1rem",
-                    }}
-                  >
-                    {x.label}
-                  </div>
-                  <div
-                    style={{
-                      color: theme.slate,
-                      fontSize: "0.85rem",
-                      marginTop: "4px",
-                    }}
-                  >
-                    {x.sub}
-                  </div>
+                  ✦ World‑Class Eye Care
+                </span>
+                <h1
+                  style={{
+                    fontFamily: "'DM Serif Display', serif",
+                    fontSize: "clamp(2.5rem, 4vw, 4rem)",
+                    lineHeight: 1.05,
+                    margin: "0 0 20px",
+                    color: theme.navy,
+                  }}
+                >
+                  Your Vision,
+                  <em style={{ color: theme.sky, fontStyle: "italic" }}>
+                    Our Promise
+                  </em>
+                </h1>
+                <p
+                  style={{
+                    fontSize: "1.1rem",
+                    color: theme.slate,
+                    lineHeight: 1.6,
+                    marginBottom: "32px",
+                    maxWidth: "500px",
+                  }}
+                >
+                  Expert ophthalmologists, advanced technology, and a smooth
+                  journey from consultation to recovery.
+                </p>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "16px",
+                    flexWrap: "wrap",
+                    marginBottom: "32px",
+                  }}
+                >
+                  <Link to="/appointment" className="btn btn-primary">
+                    Book Appointment →
+                  </Link>
+                  <Link to="/services" className="btn btn-outline">
+                    Explore Services
+                  </Link>
                 </div>
-              ))}
+              </div>
+              <div
+                style={{
+                  background: "white",
+                  borderRadius: "48px",
+                  padding: "32px",
+                  boxShadow: theme.shadow,
+                  border: `1px solid ${theme.border}`,
+                  textAlign: "center",
+                }}
+              >
+                <div style={{ fontSize: "3rem", marginBottom: "16px" }}>👁️</div>
+                <h3
+                  style={{
+                    fontSize: "1.5rem",
+                    fontFamily: "'DM Serif Display', serif",
+                    margin: 0,
+                    color: theme.navy,
+                  }}
+                >
+                  Same‑Day
+                </h3>
+                <p style={{ color: theme.slate, margin: "8px 0 20px" }}>
+                  Emergency consultations available
+                </p>
+                <a
+                  href={`tel:${primaryPhone}`}
+                  className="btn btn-primary"
+                  style={{ background: theme.sky }}
+                >
+                  Call Now
+                </a>
+                <div
+                  style={{
+                    marginTop: "24px",
+                    fontSize: "0.85rem",
+                    color: theme.slate,
+                  }}
+                >
+                  ⭐ 4.9 ★ from 2,400+ patients
+                </div>
+              </div>
             </div>
-          </div>
+          </motion.div>
         </div>
-
-        {/* Quick action bar */}
         <div
           style={{
             position: "absolute",
-            bottom: "7%",
-            left: "50%",
-            transform: "translateX(-50%) translateY(50%)",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: "80px",
+            background: theme.bg,
+            clipPath: "ellipse(60% 100% at 50% 100%)",
+          }}
+        />
+      </section>
+
+      {/* ===== SERVICES (Scrollable 3 per row) ===== */}
+      <section style={{ padding: "80px 0", background: theme.bg }}>
+        <div
+          style={{
             width: theme.container,
-            zIndex: 10,
+            margin: "0 auto",
+            textAlign: "center",
           }}
         >
-          <div
-            className="action-bar"
+          <span
             style={{
-              display: "flex",
-              gap: "10px",
-              background: "#fff",
-              border: `1px solid ${theme.border}`,
-              borderRadius: "999px",
-              padding: "10px",
-              boxShadow: "0 8px 32px rgba(14,165,233,0.12)",
+              background: theme.skyLight,
+              padding: "6px 14px",
+              borderRadius: "40px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              color: theme.sky,
+              display: "inline-block",
+              marginBottom: "16px",
             }}
           >
-            {[
-              { label: "Book Appointment", to: "/appointment" },
-              { label: "Find a Doctor", to: "/doctors" },
-              { label: "View Services", to: "/services" },
-              {
-                label: `Emergency: ${EMERGENCY_PHONE}`,
-                href: `tel:${EMERGENCY_PHONE}`,
-              },
-            ].map((a) =>
-              a.to ? (
-                <Link
-                  key={a.label}
-                  to={a.to}
-                  className="btn btn-ghost"
-                  style={{ flex: 1, minHeight: "46px" }}
-                >
-                  {a.label}
-                </Link>
-              ) : (
-                <a
-                  key={a.label}
-                  href={a.href}
-                  className="btn btn-primary"
-                  style={{ flex: 1, minHeight: "46px" }}
-                >
-                  {a.label}
-                </a>
-              ),
-            )}
-          </div>
-        </div>
-
-        <div className="hero-wave" />
-      </section>
-
-      <div style={{ height: "64px" }} />
-
-      {/* ── MARQUEE ────────────────────────────────────────────────────────── */}
-      <div className="marquee-wrap">
-        <div className="marquee-track">
-          {[...marqueeItems, ...marqueeItems].map((item, i) => (
-            <span key={i} className="marquee-item">
-              {item}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* ── STATS ──────────────────────────────────────────────────────────── */}
-      <section style={{ background: "#fff", padding: "64px 0" }}>
-        <div style={{ width: theme.container, margin: "0 auto" }}>
-          <div
-            className="stats-grid"
+            Specialties
+          </span>
+          <h2
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: "24px",
+              fontFamily: "'DM Serif Display', serif",
+              fontSize: "clamp(2rem, 3.5vw, 3rem)",
+              margin: "0 0 16px",
+              color: theme.navy,
             }}
           >
-            {stats.map((s) => (
-              <div
-                key={s.label}
-                style={{
-                  textAlign: "center",
-                  padding: "32px 24px",
-                  borderRadius: theme.radius,
-                  background: theme.light,
-                  border: `1px solid ${theme.border}`,
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: "'DM Serif Display', serif",
-                    fontSize: "2.8rem",
-                    color: theme.sky,
-                    lineHeight: 1,
-                    marginBottom: "8px",
-                  }}
-                >
-                  {s.value}
-                </div>
-                <div
-                  style={{
-                    color: theme.slate,
-                    fontSize: "0.92rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  {s.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── SERVICES ───────────────────────────────────────────────────────── */}
-      <AnimatedSection style={{ padding: "80px 0", background: "#f8fafc" }}>
-        <div style={{ width: theme.container, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "48px" }}>
-            <div style={{ ...eyebrow, margin: "0 auto 16px" }}>
-              Our Services
-            </div>
-            <h2 style={{ ...h2Style, textAlign: "center" }}>
-              Treatments We Offer
-            </h2>
-            <p style={{ ...bodyText, textAlign: "center", margin: "0 auto" }}>
-              Expert care across the full spectrum of eye health — all under one
-              roof.
-            </p>
-          </div>
-
-          <div
-            className="service-grid"
+            Advanced Treatments
+          </h2>
+          <p
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "22px",
+              color: theme.slate,
+              maxWidth: "700px",
+              margin: "0 auto 50px",
             }}
           >
-            {services.map((svc) => (
-              <article
-                key={svc.id}
-                className="hc"
-                style={{
-                  ...card,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "14px",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: "4px",
-                    background: "linear-gradient(90deg, #0ea5e9, #38bdf8)",
-                  }}
-                />
-                <div
-                  style={{
-                    width: "52px",
-                    height: "52px",
-                    borderRadius: "14px",
-                    background: theme.skyLight,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "1.4rem",
-                  }}
-                >
-                  {svc.icon}
-                </div>
-                <div>
-                  <span
-                    style={{
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      color: theme.sky,
-                      letterSpacing: "0.08em",
-                    }}
-                  >
-                    {svc.id}
-                  </span>
-                  <h3
-                    style={{
-                      fontFamily: "'DM Serif Display', serif",
-                      fontSize: "1.3rem",
-                      color: theme.navy,
-                      margin: "4px 0 8px",
-                    }}
-                  >
-                    {svc.title}
-                  </h3>
-                  <p style={{ ...bodyText, fontSize: "0.92rem" }}>
-                    {svc.description}
-                  </p>
-                </div>
-                <div
-                  style={{ marginTop: "auto", display: "flex", gap: "10px" }}
-                >
-                  <Link
-                    className="btn btn-outline"
-                    to="/services"
-                    style={{ minHeight: "42px", flex: 1, fontSize: "0.88rem" }}
-                  >
-                    Learn More
-                  </Link>
-                  <Link
-                    className="btn btn-primary"
-                    to="/appointment"
-                    style={{ minHeight: "42px", flex: 1, fontSize: "0.88rem" }}
-                  >
-                    Book
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </AnimatedSection>
+            From routine exams to complex surgeries – we cover every aspect of
+            eye health.
+          </p>
 
-      {/* ── WHY CHOOSE US ──────────────────────────────────────────────────── */}
-      <AnimatedSection style={{ padding: "80px 0", background: "#fff" }}>
-        <div style={{ width: theme.container, margin: "0 auto" }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "60px",
-              alignItems: "start",
-            }}
-            className="hero-split"
-          >
-            <div>
-              <div style={eyebrow}>Why Choose Us</div>
-              <h2 style={h2Style}>
-                Your Vision Is Our <br />
-                <em style={{ color: theme.sky, fontStyle: "italic" }}>
-                  Priority.
-                </em>
-              </h2>
-              <p style={{ ...bodyText, marginBottom: "28px" }}>
-                Every decision we make is built around patient safety, clear
-                communication, and outcome-led care that inspires confidence.
-              </p>
-              <Link className="btn btn-primary" to="/appointment">
-                Book a Consultation
-              </Link>
-            </div>
-            <div
-              className="why-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "16px",
-              }}
+          {loading ? (
+            <div>Loading services...</div>
+          ) : activeServices.length === 0 ? (
+            <div>No services found</div>
+          ) : (
+            <motion.div
+              className="scroll-container"
+              variants={stagger}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
             >
-              {whyChooseUs.map((x) => (
-                <div
-                  key={x.id}
-                  className="hc"
-                  style={{
-                    ...card,
-                    padding: "22px",
-                  }}
-                >
-                  <div
+              {activeServices.map((svc, i) => (
+                <div key={svc._id} className="scroll-item">
+                  <motion.div
+                    variants={fadeUp}
+                    className="hover-lift"
                     style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "10px",
-                      background: theme.skyLight,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: theme.sky,
-                      fontWeight: 800,
-                      fontSize: "0.8rem",
-                      marginBottom: "12px",
+                      background: "white",
+                      borderRadius: "32px",
+                      padding: "32px",
+                      border: `1px solid ${theme.border}`,
+                      boxShadow: theme.shadow,
+                      textAlign: "left",
                     }}
                   >
-                    {x.id}
-                  </div>
-                  <h4
-                    style={{
-                      fontFamily: "'DM Serif Display', serif",
-                      fontSize: "1.1rem",
-                      color: theme.navy,
-                      margin: "0 0 8px",
-                    }}
-                  >
-                    {x.title}
-                  </h4>
-                  <p style={{ ...bodyText, fontSize: "0.88rem" }}>{x.copy}</p>
+                    <div
+                      style={{
+                        fontSize: "2.5rem",
+                        marginBottom: "16px",
+                        textAlign: "center",
+                      }}
+                    >
+                      🩺
+                    </div>
+                    <h3
+                      style={{
+                        fontFamily: "'DM Serif Display', serif",
+                        fontSize: "1.4rem",
+                        margin: "0 0 12px",
+                        color: theme.navy,
+                        textAlign: "center",
+                      }}
+                    >
+                      {svc.title}
+                    </h3>
+                    <p
+                      style={{
+                        color: theme.slate,
+                        lineHeight: 1.6,
+                        marginBottom: "24px",
+                        flexGrow: 1,
+                        textAlign: "center",
+                      }}
+                    >
+                      {svc.description?.slice(0, 90)}…
+                    </p>
+                    <Link
+                      to={`/services/${svc.slug || svc._id}`}
+                      className="btn btn-outline"
+                      style={{ width: "100%", justifyContent: "center" }}
+                    >
+                      Learn More →
+                    </Link>
+                  </motion.div>
                 </div>
               ))}
-            </div>
+            </motion.div>
+          )}
+          <div style={{ marginTop: "24px" }}>
+            <Link to="/services" className="btn btn-primary">
+              See All Services →
+            </Link>
           </div>
         </div>
-      </AnimatedSection>
+      </section>
 
-      {/* ── DOCTORS ────────────────────────────────────────────────────────── */}
-      <AnimatedSection style={{ padding: "80px 0", background: "#f8fafc" }}>
-        <div style={{ width: theme.container, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "48px" }}>
-            <div style={{ ...eyebrow, margin: "0 auto 16px" }}>
-              Our Specialists
-            </div>
-            <h2 style={{ ...h2Style, textAlign: "center" }}>
-              Meet Your Doctors
-            </h2>
-            <p style={{ ...bodyText, textAlign: "center", margin: "0 auto" }}>
-              Real expertise, clearly presented — so you feel safe from the
-              moment you book.
-            </p>
-          </div>
-
-          <div
-            className="doc-grid"
+      {/* ===== DOCTORS SECTION (Scrollable 3 per row + AboutPage Design) ===== */}
+      <section style={{ padding: "80px 0", background: "white" }}>
+        <div
+          style={{
+            width: theme.container,
+            margin: "0 auto",
+            textAlign: "center",
+          }}
+        >
+          <span
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: "20px",
+              background: theme.skyLight,
+              padding: "6px 14px",
+              borderRadius: "40px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              color: theme.sky,
+              display: "inline-block",
+              marginBottom: "16px",
             }}
           >
-            {doctors.map((doc, i) => (
-              <article
-                key={doc.name}
-                className="hc"
-                style={{ ...card, textAlign: "center", padding: "30px 20px" }}
-              >
-                <div
-                  style={{
-                    width: "80px",
-                    height: "80px",
-                    borderRadius: "50%",
-                    background: `linear-gradient(135deg, #0ea5e9, #38bdf8)`,
-                    color: "#fff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: "'DM Serif Display', serif",
-                    fontSize: "1.4rem",
-                    margin: "0 auto 16px",
-                    boxShadow: "0 6px 20px rgba(14,165,233,0.28)",
-                  }}
-                >
-                  {doc.initials}
+            Our Doctors
+          </span>
+          <h2
+            style={{
+              fontFamily: "'DM Serif Display', serif",
+              fontSize: "clamp(2rem, 3.5vw, 3rem)",
+              margin: "0 0 16px",
+              color: theme.navy,
+            }}
+          >
+            Meet Your Specialists
+          </h2>
+          <p
+            style={{
+              color: theme.slate,
+              maxWidth: "700px",
+              margin: "0 auto 50px",
+            }}
+          >
+            Highly experienced, board‑certified ophthalmologists dedicated to
+            your vision.
+          </p>
+
+          {loading ? (
+            <div>Loading doctors...</div>
+          ) : activeDoctors.length === 0 ? (
+            <div>No doctors found</div>
+          ) : (
+            <motion.div
+              className="scroll-container"
+              variants={stagger}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              {activeDoctors.map((doc) => (
+                <div key={doc._id} className="scroll-item">
+                  <motion.div
+                    variants={fadeUp}
+                    className="hover-lift"
+                    style={{
+                      background: `linear-gradient(145deg, ${theme.white}, ${theme.bg})`,
+                      borderRadius: "32px",
+                      padding: "28px",
+                      border: `1px solid ${theme.border}`,
+                      position: "relative",
+                      transition: "all 0.3s ease",
+                      textAlign: "center",
+                    }}
+                  >
+                    {/* Decorative top bar */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 20,
+                        right: 20,
+                        height: "4px",
+                        background: `linear-gradient(90deg, ${theme.sky}, ${theme.skyMid})`,
+                        borderRadius: "4px",
+                      }}
+                    />
+
+                    {/* Avatar / Photo */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        marginBottom: 20,
+                      }}
+                    >
+                      {doc.photo ? (
+                        <img
+                          src={doc.photo}
+                          alt={doc.name}
+                          style={{
+                            width: "130px",
+                            height: "130px",
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                            border: `4px solid ${theme.white}`,
+                            boxShadow: "0 15px 30px rgba(14,165,233,0.2)",
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: "130px",
+                            height: "130px",
+                            borderRadius: "50%",
+                            background: `linear-gradient(135deg, ${theme.sky}, ${theme.skyMid})`,
+                            display: "grid",
+                            placeItems: "center",
+                            color: "white",
+                            fontSize: "2rem",
+                            fontWeight: 800,
+                            fontFamily: "'DM Serif Display', serif",
+                            boxShadow: "0 15px 30px rgba(14,165,233,0.2)",
+                          }}
+                        >
+                          {getInitials(doc.name)}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Role badge */}
+                    <div style={{ textAlign: "center", marginBottom: 12 }}>
+                      <span
+                        style={{
+                          background: theme.skyLight,
+                          color: theme.skyHover,
+                          padding: "4px 12px",
+                          borderRadius: "40px",
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {doc.role || "Specialist"}
+                      </span>
+                    </div>
+
+                    {/* Name */}
+                    <h3
+                      style={{
+                        fontFamily: "'DM Serif Display', serif",
+                        fontSize: "1.6rem",
+                        margin: "0 0 6px",
+                        textAlign: "center",
+                        color: theme.navy,
+                      }}
+                    >
+                      {doc.name}
+                    </h3>
+
+                    {/* Specialization */}
+                    <div style={{ textAlign: "center", marginBottom: 12 }}>
+                      <div style={{ color: theme.sky, fontWeight: 600 }}>
+                        {doc.specialization ||
+                          doc.focus?.[0] ||
+                          "Ophthalmologist"}
+                      </div>
+                      {doc.focus && doc.focus.length > 1 && (
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: 6,
+                            justifyContent: "center",
+                            marginTop: 8,
+                          }}
+                        >
+                          {doc.focus.slice(1, 4).map((f) => (
+                            <span
+                              key={f}
+                              style={{
+                                fontSize: "0.7rem",
+                                background: theme.borderLight,
+                                padding: "2px 10px",
+                                borderRadius: "20px",
+                                color: theme.navyMid,
+                              }}
+                            >
+                              {f}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bio */}
+                    <p
+                      style={{
+                        color: theme.slate,
+                        fontSize: "0.9rem",
+                        lineHeight: 1.6,
+                        textAlign: "center",
+                        margin: "12px 0 16px",
+                        flexGrow: 1,
+                      }}
+                    >
+                      {doc.bio?.length > 100
+                        ? `${doc.bio.slice(0, 100)}...`
+                        : doc.bio ||
+                          "Experienced eye care specialist committed to excellence."}
+                    </p>
+
+                    {/* Stats row */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-around",
+                        margin: "20px 0 16px",
+                        padding: "12px 0",
+                        borderTop: `1px solid ${theme.borderLight}`,
+                        borderBottom: `1px solid ${theme.borderLight}`,
+                      }}
+                    >
+                      <div style={{ textAlign: "center" }}>
+                        <div
+                          style={{
+                            fontWeight: 800,
+                            fontSize: "1.2rem",
+                            color: theme.skyHover,
+                          }}
+                        >
+                          {doc.experienceYears || "10"}+
+                        </div>
+                        <div style={{ fontSize: "0.7rem", color: theme.slate }}>
+                          Years
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <div
+                          style={{
+                            fontWeight: 800,
+                            fontSize: "1.2rem",
+                            color: theme.skyHover,
+                          }}
+                        >
+                          ⭐ {doc.rating || "4.5"}
+                        </div>
+                        <div style={{ fontSize: "0.7rem", color: theme.slate }}>
+                          Rating
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <div
+                          style={{
+                            fontWeight: 600,
+                            fontSize: "0.8rem",
+                            color: theme.skyHover,
+                          }}
+                        >
+                          {doc.availabilityStatus || "Available"}
+                        </div>
+                        <div style={{ fontSize: "0.7rem", color: theme.slate }}>
+                          Status
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 12,
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Link
+                        to={`/doctors/${doc._id}`}
+                        className="btn btn-outline"
+                        style={{ padding: "8px 20px", fontSize: "0.8rem" }}
+                      >
+                        Profile
+                      </Link>
+                      <Link
+                        to="/appointment"
+                        className="btn btn-primary"
+                        style={{ padding: "8px 20px", fontSize: "0.8rem" }}
+                      >
+                        Book
+                      </Link>
+                    </div>
+                  </motion.div>
                 </div>
-                <div
-                  style={{
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: theme.sky,
-                    letterSpacing: "0.08em",
-                    marginBottom: "6px",
-                  }}
-                >
-                  {doc.role}
+              ))}
+            </motion.div>
+          )}
+          <div style={{ marginTop: "24px" }}>
+            <Link to="/doctors" className="btn btn-primary">
+              See All Doctors →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== WHY CHOOSE US (value grid) ===== */}
+      <section style={{ padding: "80px 0", background: theme.bg }}>
+        <div
+          style={{
+            width: theme.container,
+            margin: "0 auto",
+            textAlign: "center",
+          }}
+        >
+          <span
+            style={{
+              background: theme.skyLight,
+              padding: "6px 14px",
+              borderRadius: "40px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              color: theme.sky,
+              display: "inline-block",
+              marginBottom: "16px",
+            }}
+          >
+            Why Choose Us
+          </span>
+          <h2
+            style={{
+              fontFamily: "'DM Serif Display', serif",
+              fontSize: "clamp(2rem, 3.5vw, 3rem)",
+              margin: "0 0 16px",
+              color: theme.navy,
+            }}
+          >
+            Confidence in Every Step
+          </h2>
+          <p
+            style={{
+              color: theme.slate,
+              maxWidth: "700px",
+              margin: "0 auto 50px",
+            }}
+          >
+            We combine clinical excellence with genuine compassion.
+          </p>
+          <div className="grid-4">
+            {values.map((v, i) => (
+              <div
+                key={i}
+                className="hover-lift"
+                style={{
+                  background: "white",
+                  borderRadius: "28px",
+                  padding: "32px 24px",
+                  border: `1px solid ${theme.border}`,
+                  textAlign: "center",
+                }}
+              >
+                <div style={{ fontSize: "2.5rem", marginBottom: "16px" }}>
+                  {v.icon}
                 </div>
                 <h3
                   style={{
-                    fontFamily: "'DM Serif Display', serif",
-                    fontSize: "1.15rem",
+                    fontSize: "1.2rem",
+                    margin: "0 0 12px",
                     color: theme.navy,
-                    margin: "0 0 10px",
                   }}
                 >
-                  {doc.name}
+                  {v.title}
                 </h3>
                 <p
-                  style={{
-                    ...bodyText,
-                    fontSize: "0.88rem",
-                    textAlign: "center",
-                    margin: "0 0 16px",
-                  }}
+                  style={{ fontSize: "0.9rem", color: theme.slate, margin: 0 }}
                 >
-                  {doc.bio}
+                  {v.desc}
                 </p>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <Link
-                    className="btn btn-outline"
-                    to="/doctors"
-                    style={{ flex: 1, minHeight: "40px", fontSize: "0.85rem" }}
-                  >
-                    Profile
-                  </Link>
-                  <Link
-                    className="btn btn-primary"
-                    to="/appointment"
-                    style={{ flex: 1, minHeight: "40px", fontSize: "0.85rem" }}
-                  >
-                    Book
-                  </Link>
-                </div>
-              </article>
+              </div>
             ))}
           </div>
         </div>
-      </AnimatedSection>
+      </section>
 
-      {/* ── BOOKING WIDGET ─────────────────────────────────────────────────── */}
-      <AnimatedSection
-        style={{
-          padding: "80px 0",
-          background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: "-100px",
-            right: "-100px",
-            width: "400px",
-            height: "400px",
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.07)",
-            pointerEvents: "none",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            bottom: "-60px",
-            left: "-60px",
-            width: "280px",
-            height: "280px",
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.05)",
-            pointerEvents: "none",
-          }}
-        />
-
-        <div
-          style={{
-            width: theme.container,
-            margin: "0 auto",
-            position: "relative",
-          }}
-        >
-          <div style={{ textAlign: "center", marginBottom: "40px" }}>
-            <div
-              style={{
-                ...eyebrow,
-                background: "rgba(255,255,255,0.2)",
-                color: "#fff",
-                margin: "0 auto 16px",
-              }}
-            >
-              Book an Appointment
-            </div>
-            <h2
-              style={{
-                ...h2Style,
-                color: "#fff",
-                textAlign: "center",
-              }}
-            >
-              Let's Get You Seen
-            </h2>
-            <p
-              style={{
-                ...bodyText,
-                color: "rgba(255,255,255,0.82)",
-                textAlign: "center",
-                margin: "0 auto",
-              }}
-            >
-              Choose a service and time — we'll confirm your slot quickly.
-            </p>
-          </div>
-
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: theme.radiusLG,
-              padding: "36px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-            }}
-          >
-            <form onSubmit={onBookingSubmit}>
-              <div
-                className="book-grid"
+      {/* ===== FINAL CTA + FAQ (combined) ===== */}
+      <section style={{ padding: "80px 0", background: "white" }}>
+        <div style={{ width: theme.container, margin: "0 auto" }}>
+          <div className="grid-2" style={{ alignItems: "center", gap: "50px" }}>
+            <div>
+              <span
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: "16px",
+                  background: theme.skyLight,
+                  padding: "6px 14px",
+                  borderRadius: "40px",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  color: theme.sky,
+                  display: "inline-block",
+                  marginBottom: "16px",
                 }}
               >
-                {[
-                  {
-                    key: "service",
-                    label: "Service",
-                    type: "select",
-                    options: services.map((s) => s.title),
-                  },
-                  {
-                    key: "doctor",
-                    label: "Doctor",
-                    type: "select",
-                    options: doctors.map((d) => d.name),
-                    placeholder: "Any available",
-                  },
-                  { key: "date", label: "Preferred Date", type: "date" },
-                  {
-                    key: "name",
-                    label: "Full Name",
-                    type: "text",
-                    placeholder: "Your full name",
-                  },
-                  {
-                    key: "phone",
-                    label: "Phone Number",
-                    type: "tel",
-                    placeholder: "+1 555 000 0000",
-                  },
-                ].map((field) => (
-                  <div key={field.key}>
-                    <label
+                Ready to Start?
+              </span>
+              <h2
+                style={{
+                  fontFamily: "'DM Serif Display', serif",
+                  fontSize: "clamp(1.8rem, 3vw, 2.5rem)",
+                  margin: "0 0 20px",
+                  color: theme.navy,
+                }}
+              >
+                Book Your Consultation Today
+              </h2>
+              <p style={{ color: theme.slate, marginBottom: "32px" }}>
+                Take the first step toward clearer vision. Our team is here to
+                answer your questions and schedule your visit.
+              </p>
+              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                <Link to="/appointment" className="btn btn-primary">
+                  Book Appointment →
+                </Link>
+                <Link to="/contact" className="btn btn-outline">
+                  Contact Us
+                </Link>
+              </div>
+            </div>
+            <div>
+              <h3
+                style={{
+                  fontSize: "1.5rem",
+                  fontFamily: "'DM Serif Display', serif",
+                  marginBottom: "24px",
+                  color: theme.navy,
+                }}
+              >
+                Frequently Asked Questions
+              </h3>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                }}
+              >
+                {faq.map((item, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      border: `1px solid ${theme.border}`,
+                      borderRadius: "24px",
+                      overflow: "hidden",
+                      background: theme.bg,
+                    }}
+                  >
+                    <button
+                      onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                       style={{
-                        display: "block",
-                        marginBottom: "8px",
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "18px 24px",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        fontFamily: "inherit",
+                        fontSize: "1rem",
                         fontWeight: 600,
                         color: theme.navy,
-                        fontSize: "0.9rem",
                       }}
                     >
-                      {field.label}
-                    </label>
-                    {field.type === "select" ? (
-                      <select
-                        className="input-field"
-                        value={booking[field.key]}
-                        onChange={onBookingChange(field.key)}
+                      {item.q}
+                      <span style={{ fontSize: "1.2rem", color: theme.sky }}>
+                        {openFaq === idx ? "−" : "+"}
+                      </span>
+                    </button>
+                    {openFaq === idx && (
+                      <div
+                        style={{
+                          padding: "0 24px 24px",
+                          color: theme.slate,
+                          lineHeight: 1.6,
+                        }}
                       >
-                        <option value="">
-                          {field.placeholder ?? "Choose..."}
-                        </option>
-                        {field.options.map((o) => (
-                          <option key={o} value={o}>
-                            {o}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        className="input-field"
-                        type={field.type}
-                        value={booking[field.key]}
-                        onChange={onBookingChange(field.key)}
-                        placeholder={field.placeholder}
-                      />
+                        {item.a}
+                      </div>
                     )}
                   </div>
                 ))}
               </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: "12px",
-                  marginTop: "24px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ flex: 1, minWidth: "180px" }}
-                >
-                  Request Appointment →
-                </button>
-                <Link
-                  to="/appointment"
-                  className="btn btn-outline"
-                  style={{ flex: 1, minWidth: "180px" }}
-                >
-                  Full Booking Page
-                </Link>
-                <a
-                  href={`tel:${PRIMARY_PHONE}`}
-                  className="btn btn-ghost"
-                  style={{ flex: 1, minWidth: "180px" }}
-                >
-                  📞 Call Now
-                </a>
-              </div>
-            </form>
-          </div>
-        </div>
-      </AnimatedSection>
-
-      {/* ── TECHNOLOGY ─────────────────────────────────────────────────────── */}
-      <AnimatedSection style={{ padding: "80px 0", background: "#fff" }}>
-        <div style={{ width: theme.container, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "48px" }}>
-            <div style={{ ...eyebrow, margin: "0 auto 16px" }}>Technology</div>
-            <h2 style={{ ...h2Style, textAlign: "center" }}>
-              State-of-the-Art Equipment
-            </h2>
-            <p style={{ ...bodyText, textAlign: "center", margin: "0 auto" }}>
-              A modern clinic experience begins with modern clinical tools.
-            </p>
-          </div>
-
-          <div
-            className="tech-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "22px",
-            }}
-          >
-            {techShowcase.map((x) => (
-              <div
-                key={x.id}
-                className="hc"
-                style={{
-                  ...card,
-                  padding: "32px",
-                  background: "linear-gradient(135deg, #f0f9ff, #e0f2fe)",
-                  border: "1px solid #bae6fd",
-                }}
-              >
-                <div
-                  style={{
-                    fontWeight: 800,
-                    color: theme.sky,
-                    fontSize: "2rem",
-                    marginBottom: "12px",
-                  }}
-                >
-                  {x.id}
-                </div>
-                <h3
-                  style={{
-                    fontFamily: "'DM Serif Display', serif",
-                    fontSize: "1.3rem",
-                    color: theme.navy,
-                    margin: "0 0 10px",
-                  }}
-                >
-                  {x.title}
-                </h3>
-                <p style={{ ...bodyText, fontSize: "0.93rem" }}>{x.copy}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </AnimatedSection>
-
-      {/* ── BLOG ───────────────────────────────────────────────────────────── */}
-      <AnimatedSection style={{ padding: "80px 0", background: "#f8fafc" }}>
-        <div style={{ width: theme.container, margin: "0 auto" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-end",
-              marginBottom: "40px",
-              flexWrap: "wrap",
-              gap: "16px",
-            }}
-          >
-            <div>
-              <div style={eyebrow}>Insights</div>
-              <h2 style={{ ...h2Style, margin: 0 }}>Latest Articles</h2>
-            </div>
-            <Link className="btn btn-outline" to="/blog">
-              View All Articles
-            </Link>
-          </div>
-
-          <div
-            className="blog-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "22px",
-            }}
-          >
-            {blogPreview.map((post) => (
-              <article
-                key={post.id}
-                className="hc"
-                style={{
-                  ...card,
-                  padding: "28px",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <span
-                  style={{
-                    padding: "5px 12px",
-                    borderRadius: "999px",
-                    background: theme.skyLight,
-                    color: theme.sky,
-                    fontSize: "0.78rem",
-                    fontWeight: 700,
-                    alignSelf: "flex-start",
-                    marginBottom: "14px",
-                  }}
-                >
-                  {post.tag}
-                </span>
-                <h3
-                  style={{
-                    fontFamily: "'DM Serif Display', serif",
-                    fontSize: "1.25rem",
-                    color: theme.navy,
-                    margin: "0 0 10px",
-                  }}
-                >
-                  {post.title}
-                </h3>
-                <p style={{ ...bodyText, fontSize: "0.91rem", flex: 1 }}>
-                  {post.excerpt}
-                </p>
-                <Link
-                  className="btn btn-outline"
-                  to="/blog"
-                  style={{
-                    marginTop: "20px",
-                    alignSelf: "flex-start",
-                    minHeight: "42px",
-                  }}
-                >
-                  Read More →
-                </Link>
-              </article>
-            ))}
-          </div>
-        </div>
-      </AnimatedSection>
-
-      {/* ── CTA BANNER ─────────────────────────────────────────────────────── */}
-      <AnimatedSection style={{ padding: "80px 0", background: "#fff" }}>
-        <div style={{ width: theme.container, margin: "0 auto" }}>
-          <div
-            style={{
-              borderRadius: theme.radiusLG,
-              padding: "60px 52px",
-              background: "linear-gradient(135deg, #1a2e44 0%, #2d4a6b 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "32px",
-              flexWrap: "wrap",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                top: "-60px",
-                right: "140px",
-                width: "300px",
-                height: "300px",
-                borderRadius: "50%",
-                background: "rgba(14,165,233,0.12)",
-                pointerEvents: "none",
-              }}
-            />
-            <div style={{ position: "relative" }}>
-              <div
-                style={{
-                  ...eyebrow,
-                  background: "rgba(14,165,233,0.2)",
-                  color: "#38bdf8",
-                  marginBottom: "16px",
-                }}
-              >
-                Eye Checkup Today
-              </div>
-              <h2 style={{ ...h2Style, color: "#fff", margin: "0 0 12px" }}>
-                Your Vision Deserves
-                <br />
-                Expert Attention.
-              </h2>
-              <p
-                style={{
-                  color: "rgba(255,255,255,0.7)",
-                  maxWidth: "48ch",
-                  lineHeight: 1.6,
-                }}
-              >
-                Start with a free consultation and we'll guide you clearly
-                through every next step.
-              </p>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: "14px",
-                flexWrap: "wrap",
-                position: "relative",
-              }}
-            >
-              <Link
-                className="btn btn-primary"
-                to="/appointment"
-                style={{ minWidth: "200px" }}
-              >
-                Book Appointment →
-              </Link>
-              <a
-                className="btn"
-                href={`tel:${PRIMARY_PHONE}`}
-                style={{
-                  background: "rgba(255,255,255,0.1)",
-                  color: "#fff",
-                  border: "1.5px solid rgba(255,255,255,0.25)",
-                  minWidth: "140px",
-                }}
-              >
-                Call Now
-              </a>
             </div>
           </div>
         </div>
-      </AnimatedSection>
-
-      {/* ── INSURANCE ──────────────────────────────────────────────────────── */}
-      <AnimatedSection style={{ padding: "60px 0", background: "#f8fafc" }}>
-        <div style={{ width: theme.container, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "32px" }}>
-            <div style={{ ...eyebrow, margin: "0 auto 0" }}>
-              Insurance & Partners
-            </div>
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(6, 1fr)",
-              gap: "14px",
-            }}
-            className="stats-grid"
-          >
-            {insurancePartners.map((x) => (
-              <div
-                key={x}
-                className="hc"
-                style={{
-                  ...card,
-                  padding: "20px",
-                  textAlign: "center",
-                }}
-              >
-                <div
-                  style={{
-                    fontWeight: 800,
-                    color: theme.navy,
-                    fontSize: "1.05rem",
-                  }}
-                >
-                  {x}
-                </div>
-                <div
-                  style={{
-                    color: theme.slate,
-                    fontSize: "0.8rem",
-                    marginTop: "4px",
-                  }}
-                >
-                  Partner
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </AnimatedSection>
-
-      {/* ── FAQ ────────────────────────────────────────────────────────────── */}
-      <AnimatedSection style={{ padding: "80px 0", background: "#fff" }}>
-        <div
-          style={{
-            width: theme.container,
-            margin: "0 auto",
-            maxWidth: "800px",
-          }}
-        >
-          <div style={{ textAlign: "center", marginBottom: "40px" }}>
-            <div style={{ ...eyebrow, margin: "0 auto 16px" }}>FAQ</div>
-            <h2 style={{ ...h2Style, textAlign: "center" }}>
-              Common Questions
-            </h2>
-          </div>
-          <FaqAccordion items={homeFaq} />
-        </div>
-      </AnimatedSection>
+      </section>
     </main>
   );
 }
