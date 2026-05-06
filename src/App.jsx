@@ -100,8 +100,8 @@ function AppShell() {
 
       <RouteRenderer location={location} />
 
-      {/* Hide Footer and Floating Dock on Admin pages */}
-      {!isAdminRoute && (
+      {/* Hide Footer and Floating Dock on Admin pages or when a modal is open */}
+      {!isAdminRoute && !isModalOpen && (
         <>
           <SiteFooter brand={brand} />
           <FloatingDock brand={brand} />

@@ -303,7 +303,10 @@ export default function ServicesPage() {
           padding: 16px;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
+        .modal-backdrop::-webkit-scrollbar { width: 0; height: 0; }
         .modal {
           width: min(980px, 100%);
           max-height: calc(100vh - 32px);
@@ -314,7 +317,10 @@ export default function ServicesPage() {
           box-shadow: 0 30px 100px rgba(2, 8, 23, 0.25);
           display: flex;
           flex-direction: column;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
+        .modal::-webkit-scrollbar { width: 0; height: 0; }
         .modal-header {
           display: flex;
           align-items: flex-start;
