@@ -4,52 +4,6 @@ import { AnimatedSection } from "../components/AnimatedSection";
 import { usePublicSite } from "../hooks/PublicSiteContext";
 import { useModal } from "../hooks/ModalContext";
 
-// Fallback data (only used if backend returns empty)
-const patientNeeds = [
-  {
-    title: "First-time vision concern",
-    copy: "Best matched to comprehensive exams, digital triage, and specialist referral when needed.",
-  },
-  {
-    title: "Ready for refractive freedom",
-    copy: "High-intent route for LASIK, SMILE, and premium correction planning with clearer candidacy support.",
-  },
-  {
-    title: "Lens or cataract decision",
-    copy: "A calmer explanation-led path for surgery preparation, family questions, and aftercare planning.",
-  },
-  {
-    title: "Long-term chronic monitoring",
-    copy: "Built for retina, glaucoma, and diabetic eye review with more continuity and repeat-visit clarity.",
-  },
-];
-
-const servicePlans = [
-  {
-    title: "Precision Checkup",
-    detail: "Screening focus",
-    copy: "For annual exams, symptom review, digital eye strain, and early-stage concern mapping.",
-  },
-  {
-    title: "Surgery Pathway",
-    detail: "High-trust decision flow",
-    copy: "For refractive or cataract patients who need candidacy, procedure planning, and recovery visibility.",
-  },
-  {
-    title: "Monitoring Pathway",
-    detail: "Repeat-care continuity",
-    copy: "For glaucoma, retina, diabetic eye care, and structured follow-up over time.",
-  },
-];
-
-const SERVICE_CATEGORIES = [
-  "Vision Correction",
-  "Surgical Procedures",
-  "Eye Diseases",
-  "Pediatric Care",
-  "General Eye Checkup",
-];
-
 // Helper to extract unique categories from actual services
 const getUniqueCategories = (services) => {
   const cats = new Set(services.map((s) => s.category).filter(Boolean));
@@ -184,17 +138,6 @@ export default function ServicesPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeService, setActiveService] = useState(null);
   const [wizardStep, setWizardStep] = useState(1);
-  const [wizard, setWizard] = useState({
-    issue: "",
-    duration: "",
-    ageGroup: "",
-  });
-
-  // Compute available categories from actual services
-  const availableCategories = useMemo(() => {
-    if (!services.length) return ["All", ...SERVICE_CATEGORIES];
-    return getUniqueCategories(services);
-  }, [services]);
 
   // Filter services based on search and category
   const filteredServices = useMemo(() => {
@@ -255,31 +198,6 @@ export default function ServicesPage() {
   useEffect(() => {
     setIsModalOpen(activeService !== null);
   }, [activeService, setIsModalOpen]);
-
-  // Wizard suggestion based on issue
-  const wizardSuggestion = useMemo(() => {
-    const issue = wizard.issue;
-    if (!issue) return null;
-    const findBy = (needle) =>
-      services.find((s) => s.title.toLowerCase().includes(needle)) || null;
-    if (issue === "Blurred vision / glasses dependence") return findBy("lasik");
-    if (issue === "Cloudy vision / cataract") return findBy("cataract");
-    if (issue === "Flashes / floaters / retina concern")
-      return findBy("retina");
-    if (issue === "Pressure / glaucoma concern") return findBy("glaucoma");
-    if (issue === "Child vision / myopia") return findBy("pediatric");
-    return services.find((s) => s.category === "General Eye Checkup") || null;
-  }, [wizard.issue, services]);
-
-  // Map doctors for a service based on doctorRoles
-  const doctorsForService = (service) => {
-    if (!service || !service.doctorRoles?.length) return doctors.slice(0, 3);
-    const rolesLower = service.doctorRoles.map((r) => r.toLowerCase());
-    const matched = doctors.filter((d) =>
-      rolesLower.some((role) => (d.role || "").toLowerCase().includes(role)),
-    );
-    return matched.length ? matched.slice(0, 3) : doctors.slice(0, 3);
-  };
 
   const whatsappHref = useMemo(() => {
     const cleaned = WHATSAPP_NUMBER.replace(/[^\d+]/g, "");
@@ -351,17 +269,7 @@ export default function ServicesPage() {
           background: #fff;
           box-shadow: 0 0 0 4px rgba(14,165,233,0.10);
         }
-        .sticky-nav {
-          position: sticky;
-          top: 12px;
-          z-index: 50;
-          border-radius: 22px;
-          border: 1px solid ${theme.border};
-          background: rgba(255,255,255,0.78);
-          backdrop-filter: blur(18px);
-          box-shadow: 0 16px 48px rgba(2, 8, 23, 0.10);
-          padding: 12px;
-        }
+        
         .tabs { display: flex; gap: 10px; overflow: auto; padding-bottom: 6px; scrollbar-width: none; }
         .tabs::-webkit-scrollbar { display: none; }
         .tab {
@@ -382,19 +290,30 @@ export default function ServicesPage() {
         .tab-active { border-color: rgba(14,165,233,0.45); background: ${theme.skyLight}; color: ${theme.skyHover}; }
         .grid-3 { display: grid; gap: 20px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .grid-2 { display: grid; gap: 20px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+        /* ---------- MODAL RESPONSIVE OVERHAUL ---------- */
         .modal-backdrop {
-          position: fixed; inset: 0; z-index: 1000;
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
           background: rgba(2, 8, 23, 0.60);
-          display: grid; place-items: center;
-          padding: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
         }
         .modal {
           width: min(980px, 100%);
+          max-height: calc(100vh - 32px);
+          overflow-y: auto;
           border-radius: 28px;
           border: 1px solid ${theme.border};
           background: #fff;
           box-shadow: 0 30px 100px rgba(2, 8, 23, 0.25);
-          overflow: hidden;
+          display: flex;
+          flex-direction: column;
         }
         .modal-header {
           display: flex;
@@ -402,16 +321,19 @@ export default function ServicesPage() {
           justify-content: space-between;
           gap: 12px;
           padding: 18px 18px 0;
+          position: sticky;
+          top: 0;
+          background: white;
+          border-radius: 28px 28px 0 0;
+          z-index: 2;
         }
-        .modal-body { padding: 18px; display: grid; gap: 14px; }
-        .floating-cta {
-          position: fixed;
-          right: 16px;
-          bottom: 16px;
-          z-index: 60;
+        .modal-body {
+          padding: 18px;
           display: grid;
-          gap: 10px;
+          gap: 14px;
         }
+
+        /* For tablets and below: force single column grids everywhere */
         @media (max-width: 1180px) {
           .grid-3 { grid-template-columns: 1fr !important; }
           .grid-2 { grid-template-columns: 1fr !important; }
@@ -419,93 +341,51 @@ export default function ServicesPage() {
           .floating-cta { left: 16px; right: 16px; grid-template-columns: 1fr; }
           .floating-cta .btn { width: 100%; }
         }
+
+        /* Phone optimisations for modal header & scrolling */
+        @media (max-width: 600px) {
+          .modal-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 16px 16px 0;
+          }
+          .modal-header .btn-ghost {
+            align-self: flex-end;
+            margin-top: -8px;
+            min-height: 40px;
+            padding: 0 16px;
+            font-size: 0.85rem;
+          }
+          .modal-body {
+            padding: 16px;
+          }
+          .modal {
+            border-radius: 24px;
+          }
+          .modal-header {
+            border-radius: 24px 24px 0 0;
+          }
+        }
+
         @media (max-width: 820px) {
           .cta-actions { flex-direction: column; width: 100%; }
           .btn { width: 100%; }
         }
       `}</style>
 
-      {/* Hero Section */}
-      <section
-        style={{
-          padding: "80px 0 36px",
-          background:
-            "linear-gradient(150deg, #e0f2fe 0%, #f0f9ff 40%, #ffffff 100%)",
-          borderBottom: `1px solid ${theme.border}`,
-        }}
-      >
-        <div style={{ width: theme.container, margin: "0 auto" }}>
-          <div style={s.eyebrow}>Our Services</div>
-          <h1
-            style={{
-              fontFamily: "'DM Serif Display', serif",
-              fontSize: "clamp(2.6rem, 4.2vw, 4.4rem)",
-              lineHeight: 1.05,
-              letterSpacing: "-0.03em",
-              margin: 0,
-              color: theme.navy,
-            }}
-          >
-            Explore the{" "}
-            <em style={{ color: theme.sky, fontStyle: "italic" }}>
-              Treatments
-            </em>
-          </h1>
-          <p style={{ ...s.p, fontSize: "1.1rem", marginTop: 18 }}>
-            Search, filter and compare services — then book with confidence.
-          </p>
-        </div>
-      </section>
-
       {/* Sticky Smart Service Navigation */}
-      <AnimatedSection style={{ ...s.sectionBand, paddingTop: "28px" }}>
+      <AnimatedSection style={s.sectionBand}>
         <div style={s.sectionShell}>
           <div className="sticky-nav">
-            <div style={{ display: "grid", gap: "10px" }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr auto",
-                  gap: "10px",
-                }}
-              >
-                <input
-                  className="input"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search treatment (e.g., LASIK, Cataract)"
-                  aria-label="Search services"
-                />
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => {
-                    setQuery("");
-                    setActiveCategory("All");
-                  }}
-                  type="button"
-                  style={{ minHeight: "48px", padding: "0 16px" }}
-                >
-                  Reset
-                </button>
-              </div>
-              <div
-                className="tabs"
-                role="tablist"
-                aria-label="Service categories"
-                style={{ justifyContent: "center" }}
-              >
-                {availableCategories.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    className={`tab ${activeCategory === cat ? "tab-active" : ""}`}
-                    onClick={() => setActiveCategory(cat)}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <input
+              className="input"
+              style={{ marginTop: "20px" }}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search treatment (e.g., LASIK, Cataract)"
+              aria-label="Search services"
+            />
           </div>
         </div>
       </AnimatedSection>
@@ -516,9 +396,9 @@ export default function ServicesPage() {
           <div style={s.sectionShell} ref={refs.featured}>
             <div style={s.sectionHead}>
               <div style={{ ...s.eyebrow, marginTop: "40px" }}>
-                Featured Services
+                Our Services
               </div>
-              <h2 style={s.h2}>High Demand</h2>
+              <h2 style={s.h2}>High Demand Services</h2>
               <p style={s.p}>
                 Benefits + quick actions, in a calm light theme.
               </p>
@@ -599,21 +479,21 @@ export default function ServicesPage() {
                     style={{
                       display: "flex",
                       gap: "10px",
-                      flexWrap: "wrap",
+                      flexWrap: "nowrap",
                       marginTop: "18px",
                     }}
                   >
                     <button
                       type="button"
                       className="btn btn-outline"
-                      style={{ minHeight: "46px" }}
+                      style={{ minHeight: "46px", flex: "1 1 0", minWidth: 0 }}
                       onClick={() => setActiveService(svc)}
                     >
                       Learn More
                     </button>
                     <Link
                       className="btn btn-primary"
-                      style={{ minHeight: "46px" }}
+                      style={{ minHeight: "46px", flex: "1 1 0", minWidth: 0 }}
                       to="/appointment"
                     >
                       Book Now
@@ -707,21 +587,21 @@ export default function ServicesPage() {
                   style={{
                     display: "flex",
                     gap: "10px",
-                    flexWrap: "wrap",
+                    flexWrap: "nowrap",
                     marginTop: "16px",
                   }}
                 >
                   <button
                     type="button"
                     className="btn btn-outline"
-                    style={{ minHeight: "46px" }}
+                    style={{ minHeight: "46px", flex: "1 1 0", minWidth: 0 }}
                     onClick={() => setActiveService(svc)}
                   >
                     Learn More
                   </button>
                   <Link
                     className="btn btn-primary"
-                    style={{ minHeight: "46px" }}
+                    style={{ minHeight: "46px", flex: "1 1 0", minWidth: 0 }}
                     to="/appointment"
                   >
                     Book Now
@@ -763,7 +643,7 @@ export default function ServicesPage() {
             <div className="modal-header">
               <div>
                 <div style={s.eyebrow}>{activeService.category}</div>
-                <h3 style={{ ...s.h2, fontSize: "2.2rem" }}>
+                <h3 style={{ ...s.h2, fontSize: "clamp(1.6rem, 4vw, 2.2rem)" }}>
                   {activeService.title}
                 </h3>
                 <p style={{ ...s.p, marginTop: 10 }}>
@@ -774,7 +654,7 @@ export default function ServicesPage() {
                 className="btn btn-ghost"
                 type="button"
                 onClick={() => setActiveService(null)}
-                style={{ minHeight: "44px" }}
+                aria-label="Close modal"
               >
                 Close
               </button>

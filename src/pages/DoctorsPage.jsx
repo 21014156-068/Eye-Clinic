@@ -3,21 +3,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatedSection } from "../components/AnimatedSection";
 import { usePublicSite } from "../hooks/PublicSiteContext";
 
-const clinicBoard = [
-  {
-    title: "Consultation windows",
-    copy: "Structured specialist scheduling for exams, diagnosis reviews, and second opinions.",
-  },
-  {
-    title: "Procedure pathways",
-    copy: "Refractive and cataract journeys aligned with counseling, imaging, and post-op support.",
-  },
-  {
-    title: "Monitoring continuity",
-    copy: "Long-term retina and glaucoma reviews delivered with more rhythm and predictability.",
-  },
-];
-
 export default function DoctorsPage() {
   const { doctors, loading } = usePublicSite();
 
