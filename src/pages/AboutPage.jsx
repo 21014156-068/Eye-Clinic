@@ -13,6 +13,16 @@ const stagger = {
   visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
+// The Memorized Vibrant Color Palette
+const accentColors = [
+  { primary: "#8b5cf6", light: "#ede9fe", hover: "#7c3aed" }, // Violet
+  { primary: "#10b981", light: "#d1fae5", hover: "#059669" }, // Emerald
+  { primary: "#f43f5e", light: "#ffe4e6", hover: "#e11d48" }, // Rose
+  { primary: "#f59e0b", light: "#fef3c7", hover: "#d97706" }, // Amber
+  { primary: "#0ea5e9", light: "#e0f2fe", hover: "#0284c7" }, // Sky Blue
+  { primary: "#ec4899", light: "#fce7f3", hover: "#db2777" }, // Pink
+];
+
 export default function AboutPage() {
   const { doctors, loading } = usePublicSite();
   const activeDoctors = doctors.filter((d) => d.active !== false);
@@ -52,26 +62,32 @@ export default function AboutPage() {
 
   const expertise = [
     {
+      icon: "👁️",
       title: "Cataract Surgery",
       desc: "Modern lens replacement with precision and care.",
     },
     {
+      icon: "⚡",
       title: "LASIK / Refractive",
       desc: "Freedom from glasses with advanced laser technology.",
     },
     {
+      icon: "🔍",
       title: "Retina Care",
       desc: "Specialist management of diabetic eye disease and floaters.",
     },
     {
+      icon: "🛡️",
       title: "Glaucoma Management",
       desc: "Long-term pressure control and vision preservation.",
     },
     {
+      icon: "👶",
       title: "Pediatric Eye Care",
       desc: "Gentle exams and myopia management for children.",
     },
     {
+      icon: "🩺",
       title: "General Eye Health",
       desc: "Comprehensive checkups for all ages.",
     },
@@ -79,7 +95,7 @@ export default function AboutPage() {
 
   const whyUs = [
     {
-      icon: "👁️",
+      icon: "👨‍⚕️",
       title: "Expert Specialists",
       desc: "Led by experienced ophthalmologists and surgeons.",
     },
@@ -111,12 +127,13 @@ export default function AboutPage() {
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap');
-        .hover-lift { transition: transform 0.25s ease, box-shadow 0.25s ease; }
-        .hover-lift:hover { transform: translateY(-8px); box-shadow: ${theme.shadowHover}; }
-        .gradient-text { background: linear-gradient(135deg, ${theme.sky}, ${theme.skyMid}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hover-lift { transition: transform 0.25s ease, box-shadow 0.25s ease; height: 100%; display: flex; flex-direction: column; }
+        .hover-lift:hover { transform: translateY(-8px); box-shadow: ${theme.shadowHover}; z-index: 2; position: relative; }
+        
         .btn {
           display: inline-flex;
           align-items: center;
+          justify-content: center;
           gap: 8px;
           padding: 12px 28px;
           border-radius: 40px;
@@ -125,100 +142,259 @@ export default function AboutPage() {
           transition: all 0.2s;
           border: none;
           cursor: pointer;
+          font-family: 'Inter', system-ui;
         }
         .btn-primary { background: ${theme.sky}; color: white; box-shadow: 0 8px 20px rgba(14,165,233,0.3); }
         .btn-primary:hover { background: ${theme.skyHover}; transform: translateY(-2px); }
         .btn-outline { background: transparent; border: 1.5px solid ${theme.sky}; color: ${theme.sky}; }
         .btn-outline:hover { background: ${theme.skyLight}; transform: translateY(-2px); }
-        .grid-2 { display: grid; gap: 30px; grid-template-columns: repeat(2, 1fr); }
+        
+        .grid-2 { display: grid; gap: 40px; grid-template-columns: repeat(2, 1fr); }
         .grid-3 { display: grid; gap: 30px; grid-template-columns: repeat(3, 1fr); }
         .grid-4 { display: grid; gap: 30px; grid-template-columns: repeat(4, 1fr); }
         @media (max-width: 1024px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+        
+        /* Floating Glow Animation */
+        .ambient-glow {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          z-index: 0;
+          opacity: 0.5;
+          animation: float 8s ease-in-out infinite;
+        }
+        @keyframes float {
+          0% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-20px) scale(1.05); }
+          100% { transform: translateY(0px) scale(1); }
+        }
       `}</style>
 
-      {/* ========== OUR STORY (minimal, fresh) ========== */}
-      <section style={{ padding: "100px 0", background: theme.white }}>
-        <div style={{ width: theme.container, margin: "0 auto" }}>
-          <div className="grid-2" style={{ alignItems: "center" }}>
+      {/* ========== HERO / OUR STORY ========== */}
+      <section
+        ref={heroRef}
+        style={{
+          padding: "140px 0 100px",
+          background: `linear-gradient(145deg, #e0f2fe 0%, #ffffff 100%)`,
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          className="ambient-glow"
+          style={{
+            width: "400px",
+            height: "400px",
+            background: accentColors[4].light,
+            top: "-100px",
+            right: "-100px",
+          }}
+        ></div>
+        <div
+          className="ambient-glow"
+          style={{
+            width: "300px",
+            height: "300px",
+            background: accentColors[3].light,
+            bottom: "-50px",
+            left: "-50px",
+            animationDelay: "2s",
+          }}
+        ></div>
+
+        <div
+          style={{
+            width: theme.container,
+            margin: "0 auto",
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+          <div className="grid-2" style={{ alignItems: "center", gap: "60px" }}>
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
+              initial="hidden"
+              animate={isHeroVisible ? "visible" : "hidden"}
+              variants={fadeUp}
             >
               <span
                 style={{
-                  ...s.eyebrowBase,
-                  background: theme.skyLight,
+                  display: "inline-block",
+                  padding: "6px 14px",
+                  borderRadius: "40px",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  background: theme.white,
                   color: theme.sky,
+                  boxShadow: theme.shadow,
+                  marginBottom: "20px",
                 }}
               >
-                About Us
+                Our Story
               </span>
-              <h2
+              <h1
                 style={{
                   fontFamily: "'DM Serif Display', serif",
-                  fontSize: "2.8rem",
-                  margin: "16px 0",
+                  fontSize: "clamp(2rem, 4vw, 4rem)",
+                  lineHeight: 1.1,
+                  margin: "0 0 24px",
                   color: theme.navy,
                 }}
               >
-                More than a clinic
-              </h2>
+                A commitment {}
+                <em style={{ color: theme.sky }}>to care.</em>
+              </h1>
               <p
                 style={{
                   color: theme.slate,
                   lineHeight: 1.7,
+                  fontSize: "1.1rem",
                   marginBottom: "20px",
+                  maxWidth: "500px",
                 }}
               >
                 Founded in 2013, we set out to change how eye care feels — no
                 rushed appointments, no confusing jargon. Just expert doctors
                 who listen, explain, and care.
               </p>
-              <p style={{ color: theme.slate, lineHeight: 1.7 }}>
+              <p
+                style={{
+                  color: theme.slate,
+                  lineHeight: 1.7,
+                  fontSize: "1.1rem",
+                  marginBottom: "32px",
+                  maxWidth: "500px",
+                }}
+              >
                 Today, we're proud to be a trusted partner for thousands of
                 families, offering advanced treatments like LASIK, cataract
                 surgery, and retina care with a human touch.
               </p>
             </motion.div>
+
+            {/* Premium Aesthetic Stat Card */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-              style={{
-                background: `linear-gradient(145deg, ${theme.skyLight}, white)`,
-                borderRadius: "40px",
-                padding: "40px",
-                textAlign: "center",
-                border: `1px solid ${theme.border}`,
-              }}
+              animate={
+                isHeroVisible
+                  ? { opacity: 1, scale: 1 }
+                  : { opacity: 0, scale: 0.95 }
+              }
+              transition={{ duration: 0.6, delay: 0.2 }}
+              style={{ position: "relative" }}
             >
-              <div style={{ fontSize: "4rem", marginBottom: "16px" }}>👁️</div>
-              <h3
+              <div
                 style={{
-                  fontSize: "1.8rem",
-                  fontFamily: "'DM Serif Display', serif",
-                  margin: 0,
-                  color: theme.navy,
+                  background: "white",
+                  borderRadius: "40px",
+                  padding: "50px 40px",
+                  textAlign: "center",
+                  border: `1px solid ${theme.border}`,
+                  boxShadow: theme.shadowHover,
+                  position: "relative",
+                  zIndex: 2,
                 }}
               >
-                EyeCon
-              </h3>
-              <p style={{ color: theme.slate }}>
-                Years of dedicated eye care excellence
-              </p>
-              <hr
-                style={{ margin: "20px 0", borderColor: theme.borderLight }}
-              />
-              {/* <div
-                style={{ fontSize: "2rem", fontWeight: 800, color: theme.sky }}
-              >
-                25,000+
+                <div
+                  style={{
+                    fontSize: "3rem",
+                    marginBottom: "24px",
+                    background: accentColors[4].light,
+                    width: "80px",
+                    height: "80px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "24px",
+                    margin: "0 auto 24px",
+                    color: accentColors[4].primary,
+                  }}
+                >
+                  👁️
+                </div>
+                <h3
+                  style={{
+                    fontSize: "clamp(1.6rem, 5vw, 2.2rem)",
+                    fontFamily: "'DM Serif Display', serif",
+                    margin: 0,
+                    color: theme.navy,
+                  }}
+                >
+                  Excellence in Vision
+                </h3>
+                <p
+                  style={{
+                    color: theme.slate,
+                    fontSize: "1.1rem",
+                    marginTop: "12px",
+                  }}
+                >
+                  Years of dedicated eye care
+                </p>
+                <hr
+                  style={{ margin: "30px 0", borderColor: theme.borderLight }}
+                />
+                <div
+                  style={{ display: "flex", justifyContent: "space-around" }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "2rem",
+                        fontWeight: 800,
+                        color: accentColors[1].primary,
+                      }}
+                    >
+                      10+
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.85rem",
+                        color: theme.slate,
+                        fontWeight: 600,
+                      }}
+                    >
+                      Specialists
+                    </div>
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "2rem",
+                        fontWeight: 800,
+                        color: accentColors[3].primary,
+                      }}
+                    >
+                      100%
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.85rem",
+                        color: theme.slate,
+                        fontWeight: 600,
+                      }}
+                    >
+                      Satisfaction
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p style={{ color: theme.slate }}>Patients treated</p> */}
+
+              {/* Decorative background element behind card */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "20px",
+                  right: "-20px",
+                  bottom: "-20px",
+                  left: "20px",
+                  background: `linear-gradient(135deg, ${accentColors[0].light}, ${accentColors[4].light})`,
+                  borderRadius: "40px",
+                  zIndex: 1,
+                }}
+              />
             </motion.div>
           </div>
         </div>
@@ -230,7 +406,7 @@ export default function AboutPage() {
           style={{
             width: theme.container,
             margin: "0 auto",
-            textAlign: "center",
+            textAlign: "left",
           }}
         >
           <span
@@ -244,7 +420,7 @@ export default function AboutPage() {
               fontWeight: 700,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              marginBottom: "20px",
+              marginBottom: "16px",
             }}
           >
             What We Do
@@ -252,10 +428,10 @@ export default function AboutPage() {
           <h2
             style={{
               fontFamily: "'DM Serif Display', serif",
-              fontSize: "2.8rem",
+              fontSize: "clamp(1.5rem, 6vw, 3rem)",
               margin: "0 auto 16px",
               color: theme.navy,
-              maxWidth: "700px",
+              maxWidth: "1000px",
             }}
           >
             Comprehensive eye care under one roof
@@ -265,6 +441,7 @@ export default function AboutPage() {
               color: theme.slate,
               maxWidth: "700px",
               margin: "0 auto 50px",
+              fontSize: "1.1rem",
             }}
           >
             From routine checkups to advanced surgeries — we've got you covered.
@@ -277,38 +454,63 @@ export default function AboutPage() {
             whileInView="visible"
             viewport={{ once: true }}
           >
-            {expertise.map((item, idx) => (
-              <motion.div
-                key={idx}
-                variants={fadeUp}
-                className="hover-lift"
-                style={{
-                  background: theme.white,
-                  borderRadius: "28px",
-                  padding: "32px 24px",
-                  border: `1px solid ${theme.border}`,
-                  boxShadow: theme.shadow,
-                  textAlign: "left",
-                }}
-              >
-                <div style={{ fontSize: "2.5rem", marginBottom: "16px" }}>
-                  🩺
-                </div>
-                <h3
+            {expertise.map((item, idx) => {
+              const accent = accentColors[idx % accentColors.length];
+              return (
+                <motion.div
+                  key={idx}
+                  variants={fadeUp}
+                  className="hover-lift"
                   style={{
-                    fontSize: "1.5rem",
-                    fontFamily: "'DM Serif Display', serif",
-                    margin: "0 0 12px",
-                    color: theme.navy,
+                    background: theme.white,
+                    borderRadius: "32px",
+                    padding: "32px",
+                    border: `1px solid ${theme.border}`,
+                    borderBottom: `4px solid ${accent.primary}`,
+                    boxShadow: theme.shadow,
+                    textAlign: "center",
                   }}
                 >
-                  {item.title}
-                </h3>
-                <p style={{ color: theme.slate, lineHeight: 1.6, margin: 0 }}>
-                  {item.desc}
-                </p>
-              </motion.div>
-            ))}
+                  <div
+                    style={{
+                      fontSize: "2rem",
+                      margin: "0 auto 20px",
+                      background: accent.light,
+                      width: "60px",
+                      height: "60px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: "16px",
+                      color: accent.primary,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {item.icon}
+                  </div>
+                  <h3
+                    style={{
+                      fontSize: "1.4rem",
+                      fontFamily: "'DM Serif Display', serif",
+                      margin: "0 0 12px",
+                      color: theme.navy,
+                    }}
+                  >
+                    {item.title}
+                  </h3>
+                  <p
+                    style={{
+                      color: theme.slate,
+                      lineHeight: 1.6,
+                      margin: 0,
+                      flexGrow: 1,
+                    }}
+                  >
+                    {item.desc}
+                  </p>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
       </section>
@@ -319,7 +521,7 @@ export default function AboutPage() {
           style={{
             width: theme.container,
             margin: "0 auto",
-            textAlign: "center",
+            textAlign: "left",
           }}
         >
           <span
@@ -333,7 +535,7 @@ export default function AboutPage() {
               fontWeight: 700,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              marginBottom: "20px",
+              marginBottom: "16px",
             }}
           >
             Our Experts
@@ -341,9 +543,10 @@ export default function AboutPage() {
           <h2
             style={{
               fontFamily: "'DM Serif Display', serif",
-              fontSize: "2.8rem",
+              fontSize: "clamp(1.5rem, 3.5vw, 3rem)",
               margin: "0 auto 16px",
               color: theme.navy,
+              textAlign: "center",
             }}
           >
             Meet the faces behind your care
@@ -353,6 +556,8 @@ export default function AboutPage() {
               color: theme.slate,
               maxWidth: "700px",
               margin: "0 auto 50px",
+              fontSize: "1.1rem",
+              textAlign: "center",
             }}
           >
             Highly skilled, compassionate, and dedicated to your vision.
@@ -370,231 +575,209 @@ export default function AboutPage() {
               whileInView="visible"
               viewport={{ once: true }}
             >
-              {featuredDoctors.map((doc) => (
-                <motion.div
-                  key={doc._id}
-                  variants={fadeUp}
-                  className="hover-lift"
-                  style={{
-                    background: `linear-gradient(145deg, ${theme.white}, ${theme.bg})`,
-                    borderRadius: "32px",
-                    padding: "28px",
-                    border: `1px solid ${theme.border}`,
-                    position: "relative",
-                    transition: "all 0.3s ease",
-                  }}
-                >
-                  {/* Decorative top bar */}
-                  <div
+              {featuredDoctors.map((doc, i) => {
+                const docAccent = accentColors[(i + 2) % accentColors.length]; // Offset color index for variety
+                return (
+                  <motion.div
+                    key={doc._id}
+                    variants={fadeUp}
+                    className="hover-lift"
                     style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 20,
-                      right: 20,
-                      height: "4px",
-                      background: `linear-gradient(90deg, ${theme.sky}, ${theme.skyMid})`,
-                      borderRadius: "4px",
-                    }}
-                  />
-
-                  {/* Avatar / Photo */}
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      marginBottom: 20,
+                      background: `linear-gradient(145deg, ${theme.white}, ${theme.bg})`,
+                      borderRadius: "32px",
+                      padding: "28px",
+                      border: `1px solid ${theme.border}`,
+                      position: "relative",
+                      transition: "all 0.3s ease",
+                      textAlign: "center",
                     }}
                   >
-                    {doc.photo ? (
-                      <img
-                        src={doc.photo}
-                        alt={doc.name}
-                        style={{
-                          width: "130px",
-                          height: "130px",
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                          border: `4px solid ${theme.white}`,
-                          boxShadow: "0 15px 30px rgba(14,165,233,0.2)",
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: "130px",
-                          height: "130px",
-                          borderRadius: "50%",
-                          background: `linear-gradient(135deg, ${theme.sky}, ${theme.skyMid})`,
-                          display: "grid",
-                          placeItems: "center",
-                          color: "white",
-                          fontSize: "2rem",
-                          fontWeight: 800,
-                          fontFamily: "'DM Serif Display', serif",
-                          boxShadow: "0 15px 30px rgba(14,165,233,0.2)",
-                        }}
-                      >
-                        {getInitials(doc.name)}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Role badge */}
-                  <div style={{ textAlign: "center", marginBottom: 12 }}>
-                    <span
+                    {/* Decorative top bar */}
+                    <div
                       style={{
-                        background: theme.skyLight,
-                        color: theme.skyHover,
-                        padding: "4px 12px",
-                        borderRadius: "40px",
-                        fontSize: "0.7rem",
-                        fontWeight: 700,
+                        position: "absolute",
+                        top: 0,
+                        left: 20,
+                        right: 20,
+                        height: "4px",
+                        background: `linear-gradient(90deg, ${docAccent.primary}, ${docAccent.hover})`,
+                        borderRadius: "4px",
+                      }}
+                    />
+
+                    {/* Avatar / Photo */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        marginBottom: 20,
                       }}
                     >
-                      {doc.role || "Specialist"}
-                    </span>
-                  </div>
-
-                  {/* Name */}
-                  <h3
-                    style={{
-                      fontFamily: "'DM Serif Display', serif",
-                      fontSize: "1.6rem",
-                      margin: "0 0 6px",
-                      textAlign: "center",
-                      color: theme.navy,
-                    }}
-                  >
-                    {doc.name}
-                  </h3>
-
-                  {/* Specialization */}
-                  <div style={{ textAlign: "center", marginBottom: 12 }}>
-                    <div style={{ color: theme.sky, fontWeight: 600 }}>
-                      {doc.specialization ||
-                        doc.focus?.[0] ||
-                        "Ophthalmologist"}
+                      {doc.photo ? (
+                        <img
+                          src={doc.photo}
+                          alt={doc.name}
+                          style={{
+                            width: "130px",
+                            height: "130px",
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                            border: `4px solid ${theme.white}`,
+                            boxShadow: `0 15px 30px ${docAccent.light}`,
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: "130px",
+                            height: "130px",
+                            borderRadius: "50%",
+                            background: `linear-gradient(135deg, ${docAccent.primary}, ${docAccent.hover})`,
+                            display: "grid",
+                            placeItems: "center",
+                            color: "white",
+                            fontSize: "2rem",
+                            fontWeight: 800,
+                            fontFamily: "'DM Serif Display', serif",
+                            boxShadow: `0 15px 30px ${docAccent.light}`,
+                          }}
+                        >
+                          {getInitials(doc.name)}
+                        </div>
+                      )}
                     </div>
-                    {doc.focus && doc.focus.length > 1 && (
-                      <div
+
+                    {/* Role badge */}
+                    <div style={{ textAlign: "center", marginBottom: 12 }}>
+                      <span
                         style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 6,
-                          justifyContent: "center",
-                          marginTop: 8,
+                          background: docAccent.light,
+                          color: docAccent.primary,
+                          padding: "4px 12px",
+                          borderRadius: "40px",
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
                         }}
                       >
-                        {doc.focus.slice(1, 4).map((f) => (
-                          <span
-                            key={f}
-                            style={{
-                              fontSize: "0.7rem",
-                              background: theme.borderLight,
-                              padding: "2px 10px",
-                              borderRadius: "20px",
-                              color: theme.navyMid,
-                            }}
-                          >
-                            {f}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Bio */}
-                  <p
-                    style={{
-                      color: theme.slate,
-                      fontSize: "0.9rem",
-                      lineHeight: 1.6,
-                      textAlign: "center",
-                      margin: "12px 0 16px",
-                    }}
-                  >
-                    {doc.bio?.length > 100
-                      ? `${doc.bio.slice(0, 100)}...`
-                      : doc.bio ||
-                        "Experienced eye care specialist committed to excellence."}
-                  </p>
-
-                  {/* Stats row */}
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-around",
-                      margin: "20px 0 16px",
-                      padding: "12px 0",
-                      borderTop: `1px solid ${theme.borderLight}`,
-                      borderBottom: `1px solid ${theme.borderLight}`,
-                    }}
-                  >
-                    <div style={{ textAlign: "center" }}>
-                      <div
-                        style={{
-                          fontWeight: 800,
-                          fontSize: "1.2rem",
-                          color: theme.skyHover,
-                        }}
-                      >
-                        {doc.experienceYears || "10"}+
-                      </div>
-                      <div style={{ fontSize: "0.7rem", color: theme.slate }}>
-                        Years
-                      </div>
+                        {doc.role || "Specialist"}
+                      </span>
                     </div>
-                    <div style={{ textAlign: "center" }}>
-                      <div
-                        style={{
-                          fontWeight: 800,
-                          fontSize: "1.2rem",
-                          color: theme.skyHover,
-                        }}
-                      >
-                        ⭐ {doc.rating || "4.5"}
-                      </div>
-                      <div style={{ fontSize: "0.7rem", color: theme.slate }}>
-                        Rating
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "center" }}>
-                      <div
-                        style={{
-                          fontWeight: 600,
-                          fontSize: "0.8rem",
-                          color: theme.skyHover,
-                        }}
-                      >
-                        {doc.availabilityStatus || "Available"}
-                      </div>
-                      <div style={{ fontSize: "0.7rem", color: theme.slate }}>
-                        Status
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Buttons */}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 12,
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Link
-                      to="/appointment"
-                      className="btn btn-primary"
-                      style={{ padding: "8px 20px", fontSize: "0.8rem" }}
+                    {/* Name */}
+                    <h3
+                      style={{
+                        fontFamily: "'DM Serif Display', serif",
+                        fontSize: "1.6rem",
+                        margin: "0 0 6px",
+                        color: theme.navy,
+                      }}
                     >
-                      Book
-                    </Link>
-                  </div>
-                </motion.div>
-              ))}
+                      {doc.name}
+                    </h3>
+
+                    {/* Bio */}
+                    <p
+                      style={{
+                        color: theme.slate,
+                        fontSize: "0.9rem",
+                        lineHeight: 1.6,
+                        margin: "12px 0 16px",
+                        flexGrow: 1,
+                      }}
+                    >
+                      {doc.bio?.length > 100
+                        ? `${doc.bio.slice(0, 100)}...`
+                        : doc.bio ||
+                          "Experienced eye care specialist committed to excellence."}
+                    </p>
+
+                    {/* Stats row */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-around",
+                        margin: "20px 0 16px",
+                        padding: "12px 0",
+                        borderTop: `1px solid ${theme.borderLight}`,
+                        borderBottom: `1px solid ${theme.borderLight}`,
+                      }}
+                    >
+                      <div style={{ textAlign: "center" }}>
+                        <div
+                          style={{
+                            fontWeight: 800,
+                            fontSize: "1.2rem",
+                            color: docAccent.primary,
+                          }}
+                        >
+                          {doc.experienceYears || "10"}+
+                        </div>
+                        <div style={{ fontSize: "0.7rem", color: theme.slate }}>
+                          Years
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <div
+                          style={{
+                            fontWeight: 800,
+                            fontSize: "1.2rem",
+                            color: docAccent.primary,
+                          }}
+                        >
+                          ⭐ {doc.rating || "4.5"}
+                        </div>
+                        <div style={{ fontSize: "0.7rem", color: theme.slate }}>
+                          Rating
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <div
+                          style={{
+                            fontWeight: 600,
+                            fontSize: "0.8rem",
+                            color: docAccent.primary,
+                          }}
+                        >
+                          {doc.availabilityStatus || "Available"}
+                        </div>
+                        <div style={{ fontSize: "0.7rem", color: theme.slate }}>
+                          Status
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 12,
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Link
+                        to="/appointment"
+                        className="btn btn-primary"
+                        style={{
+                          padding: "8px 20px",
+                          fontSize: "0.8rem",
+                          background: docAccent.primary,
+                        }}
+                      >
+                        Book
+                      </Link>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           )}
-          <div style={{ marginTop: "40px" }}>
+          <div
+            style={{
+              marginTop: "40px",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
             <Link to="/doctors" className="btn btn-outline">
               View All Doctors →
             </Link>
@@ -602,13 +785,120 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* ========== CLEAN EMOTIONAL IMPACT SECTION ========== */}
+      <section
+        style={{ padding: "100px 0", background: theme.bg, overflow: "hidden" }}
+      >
+        <div style={{ width: theme.container, margin: "0 auto" }}>
+          <div className="grid-2" style={{ alignItems: "center", gap: "60px" }}>
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+            >
+              <span
+                style={{
+                  background: theme.skyLight,
+                  padding: "6px 14px",
+                  borderRadius: "40px",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  color: theme.sky,
+                  display: "inline-block",
+                  marginBottom: "16px",
+                }}
+              >
+                Our Philosophy
+              </span>
+              <h2
+                style={{
+                  fontFamily: "'DM Serif Display', serif",
+                  /* smaller minimum for better mobile readability */
+                  fontSize: "clamp(1.5rem, 5vw, 3rem)",
+                  lineHeight: 1.1,
+                  margin: "0 0 24px",
+                  color: theme.navy,
+                }}
+              >
+                We measure our success by {}
+                <span style={{ color: theme.sky, fontStyle: "italic" }}>
+                  the moments we restore.
+                </span>
+              </h2>
+              <p
+                style={{
+                  fontSize: "1.1rem",
+                  color: theme.slate,
+                  lineHeight: 1.7,
+                  marginBottom: "20px",
+                }}
+              >
+                Behind every chart and every diagnosis is a person whose life is
+                shaped by how well they can see the world. We never lose sight
+                of that.
+              </p>
+              <p
+                style={{
+                  fontSize: "1rem",
+                  color: theme.slate,
+                  lineHeight: 1.7,
+                  marginBottom: "32px",
+                }}
+              >
+                Our approach merges elite clinical precision with a deeply human
+                touch, ensuring that when you walk out of our doors, you’re
+                stepping into a brighter, clearer future.
+              </p>
+              <Link
+                to="/services"
+                className="btn btn-primary"
+                style={{
+                  display: "block",
+                  width: "fit-content",
+                  margin: "0 auto",
+                }}
+              >
+                Explore Our Treatments
+              </Link>
+            </motion.div>
+
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+              style={{ position: "relative" }}
+            >
+              <div
+                style={{
+                  aspectRatio: "4/3",
+                  borderRadius: "40px",
+                  background: `linear-gradient(135deg, ${accentColors[3].light}, #fffbeb)`, // Warm Amber light
+                  border: `1px solid ${theme.borderLight}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  boxShadow: theme.shadow,
+                }}
+              >
+                {/* Book graphic representing returning to hobbies/reading */}
+                <div style={{ fontSize: "6rem" }}>📖</div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* ========== WHY CHOOSE US ========== */}
-      <section style={{ padding: "100px 0", background: theme.bg }}>
+      <section style={{ padding: "100px 0", background: theme.white }}>
         <div
           style={{
             width: theme.container,
             margin: "0 auto",
-            textAlign: "center",
+            textAlign: "left",
           }}
         >
           <span
@@ -622,7 +912,7 @@ export default function AboutPage() {
               fontWeight: 700,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              marginBottom: "20px",
+              marginBottom: "16px",
             }}
           >
             Why Patients Trust Us
@@ -630,9 +920,10 @@ export default function AboutPage() {
           <h2
             style={{
               fontFamily: "'DM Serif Display', serif",
-              fontSize: "2.8rem",
+              fontSize: "clamp(2rem, 3.5vw, 3rem)",
               margin: "0 auto 16px",
               color: theme.navy,
+              textAlign: "center",
             }}
           >
             Care that puts you first
@@ -642,6 +933,8 @@ export default function AboutPage() {
               color: theme.slate,
               maxWidth: "700px",
               margin: "0 auto 50px",
+              fontSize: "1.1rem",
+              textAlign: "center",
             }}
           >
             We believe in transparency, empathy, and results.
@@ -654,115 +947,63 @@ export default function AboutPage() {
             whileInView="visible"
             viewport={{ once: true }}
           >
-            {whyUs.map((item, idx) => (
-              <motion.div
-                key={idx}
-                variants={fadeUp}
-                className="hover-lift"
-                style={{
-                  background: theme.white,
-                  borderRadius: "28px",
-                  padding: "32px 20px",
-                  border: `1px solid ${theme.border}`,
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: "3rem", marginBottom: "16px" }}>
-                  {item.icon}
-                </div>
-                <h3
+            {whyUs.map((item, idx) => {
+              const valAccent = accentColors[idx % accentColors.length];
+              return (
+                <motion.div
+                  key={idx}
+                  variants={fadeUp}
+                  className="hover-lift"
                   style={{
-                    fontSize: "1.3rem",
-                    fontWeight: 700,
-                    margin: "0 0 12px",
-                    color: theme.navy,
+                    background: theme.bg, // using bg color here to offset the white section background
+                    borderRadius: "28px",
+                    padding: "32px 24px",
+                    border: `1px solid ${theme.border}`,
+                    textAlign: "center",
                   }}
                 >
-                  {item.title}
-                </h3>
-                <p
-                  style={{ color: theme.slate, fontSize: "0.9rem", margin: 0 }}
-                >
-                  {item.desc}
-                </p>
-              </motion.div>
-            ))}
+                  <div
+                    style={{
+                      fontSize: "2rem",
+                      marginBottom: "16px",
+                      background: valAccent.light,
+                      width: "60px",
+                      height: "60px",
+                      margin: "0 auto 16px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: "16px",
+                      color: valAccent.primary,
+                    }}
+                  >
+                    {item.icon}
+                  </div>
+                  <h3
+                    style={{
+                      fontSize: "1.2rem",
+                      fontWeight: 700,
+                      margin: "0 0 12px",
+                      color: theme.navy,
+                    }}
+                  >
+                    {item.title}
+                  </h3>
+                  <p
+                    style={{
+                      color: theme.slate,
+                      fontSize: "0.9rem",
+                      margin: 0,
+                    }}
+                  >
+                    {item.desc}
+                  </p>
+                </motion.div>
+              );
+            })}
           </motion.div>
-        </div>
-      </section>
-
-      {/* ========== FINAL CTA ========== */}
-      <section style={{ padding: "80px 0", background: theme.white }}>
-        <div style={{ width: theme.container, margin: "0 auto" }}>
-          <div
-            style={{
-              background: `linear-gradient(135deg, ${theme.navy} 0%, ${theme.navyMid} 100%)`,
-              borderRadius: "48px",
-              padding: "60px 40px",
-              textAlign: "center",
-              color: "white",
-            }}
-          >
-            <h2
-              style={{
-                fontFamily: "'DM Serif Display', serif",
-                fontSize: "2.5rem",
-                margin: "0 0 16px",
-              }}
-            >
-              Ready to see clearly?
-            </h2>
-            <p
-              style={{
-                fontSize: "1.1rem",
-                marginBottom: "32px",
-                opacity: 0.9,
-                maxWidth: "600px",
-                marginLeft: "auto",
-                marginRight: "auto",
-              }}
-            >
-              Schedule your appointment today and experience the difference.
-            </p>
-            <div
-              style={{
-                display: "flex",
-                gap: "16px",
-                justifyContent: "center",
-                flexWrap: "wrap",
-              }}
-            >
-              <Link
-                to="/appointment"
-                className="btn btn-primary"
-                style={{ background: theme.sky, color: "white" }}
-              >
-                Book Appointment
-              </Link>
-              <Link
-                to="/contact"
-                className="btn btn-outline"
-                style={{ borderColor: "white", color: "white" }}
-              >
-                Contact Us
-              </Link>
-            </div>
-          </div>
         </div>
       </section>
     </main>
   );
 }
-
-// Helper styles for eyebrow
-const s = {
-  eyebrowBase: {
-    display: "inline-block",
-    padding: "6px 14px",
-    borderRadius: "40px",
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    letterSpacing: "0.1em",
-    textTransform: "uppercase",
-  },
-};
