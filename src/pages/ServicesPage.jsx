@@ -10,11 +10,21 @@ const getUniqueCategories = (services) => {
   return ["All", ...Array.from(cats).sort()];
 };
 
+// The Memorized Vibrant Color Palette
+const accentColors = [
+  { primary: "#8b5cf6", light: "#ede9fe", hover: "#7c3aed" }, // Violet
+  { primary: "#10b981", light: "#d1fae5", hover: "#059669" }, // Emerald
+  { primary: "#f43f5e", light: "#ffe4e6", hover: "#e11d48" }, // Rose
+  { primary: "#f59e0b", light: "#fef3c7", hover: "#d97706" }, // Amber
+  { primary: "#0ea5e9", light: "#e0f2fe", hover: "#0284c7" }, // Sky Blue
+  { primary: "#ec4899", light: "#fce7f3", hover: "#db2777" }, // Pink
+];
+
 export default function ServicesPage() {
   const { services, doctors, loading } = usePublicSite();
   const { setIsModalOpen } = useModal();
 
-  // Theme (unchanged)
+  // Theme
   const theme = {
     sky: "#0ea5e9",
     skyHover: "#0284c7",
@@ -36,112 +46,18 @@ export default function ServicesPage() {
     container: "min(1440px, calc(100% - 32px))",
   };
 
-  const s = {
-    main: {
-      fontFamily: "'Inter', system-ui, sans-serif",
-      background: theme.bg,
-      color: theme.navy,
-      position: "relative",
-      zIndex: 1,
-      paddingBottom: "120px",
-    },
-    sectionBand: { width: "100%", padding: "64px 0" },
-    sectionShell: {
-      width: theme.container,
-      margin: "0 auto",
-      position: "relative",
-    },
-    sectionHead: { maxWidth: "820px" },
-    eyebrow: {
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "6px",
-      padding: "6px 14px",
-      borderRadius: "999px",
-      background: theme.skyLight,
-      color: theme.sky,
-      fontSize: "0.78rem",
-      fontWeight: 700,
-      letterSpacing: "0.1em",
-      textTransform: "uppercase",
-      margin: "0 0 16px",
-    },
-    h2: {
-      fontFamily: "'DM Serif Display', serif",
-      fontSize: "clamp(1.8rem, 3.1vw, 3.1rem)",
-      color: theme.navy,
-      lineHeight: 1.1,
-      letterSpacing: "-0.02em",
-      margin: 0,
-    },
-    p: {
-      color: theme.slate,
-      lineHeight: 1.72,
-      margin: "14px 0 0",
-      maxWidth: "66ch",
-      fontSize: "1.02rem",
-    },
-    card: {
-      position: "relative",
-      overflow: "hidden",
-      border: `1px solid ${theme.border}`,
-      background: theme.white,
-      boxShadow: theme.shadow,
-      padding: "24px",
-      borderRadius: theme.radius,
-      transition:
-        "transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease",
-    },
-    cardCode: {
-      display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "center",
-      minWidth: "58px",
-      height: "34px",
-      padding: "0 12px",
-      borderRadius: "999px",
-      background: theme.skyLight,
-      color: theme.sky,
-      fontSize: "0.82rem",
-      fontWeight: 800,
-      letterSpacing: "0.08em",
-    },
-    tag: {
-      display: "inline-flex",
-      alignItems: "center",
-      padding: "7px 10px",
-      borderRadius: "999px",
-      fontSize: "0.78rem",
-      fontWeight: 800,
-      letterSpacing: "0.08em",
-      textTransform: "uppercase",
-      border: `1px solid ${theme.border}`,
-      background: theme.borderLight,
-      color: theme.navyMid,
-    },
-    pill: {
-      display: "inline-flex",
-      padding: "10px 14px",
-      border: `1px solid ${theme.border}`,
-      borderRadius: "999px",
-      background: theme.bg,
-      color: theme.navyMid,
-      fontSize: "0.88rem",
-      fontWeight: 600,
-    },
-  };
-
-  const WHATSAPP_NUMBER = "+92 347 7552842";
-  const PRIMARY_PHONE = "+92 347 7552842";
-
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeService, setActiveService] = useState(null);
-  const [wizardStep, setWizardStep] = useState(1);
+
+  const categories = useMemo(
+    () => getUniqueCategories(services || []),
+    [services],
+  );
 
   // Filter services based on search and category
   const filteredServices = useMemo(() => {
-    let result = services;
+    let result = services || [];
     if (activeCategory !== "All") {
       result = result.filter((s) => s.category === activeCategory);
     }
@@ -152,491 +68,585 @@ export default function ServicesPage() {
           s.title.toLowerCase().includes(q) ||
           (s.description && s.description.toLowerCase().includes(q)) ||
           (s.tags && s.tags.some((tag) => tag.toLowerCase().includes(q))) ||
-          s.category.toLowerCase().includes(q),
+          (s.category && s.category.toLowerCase().includes(q)),
       );
     }
     return result;
   }, [services, query, activeCategory]);
 
   const featuredServices = useMemo(() => {
-    return services.filter((s) => s.featured === true).slice(0, 3);
+    return (services || []).filter((s) => s.featured === true).slice(0, 3);
   }, [services]);
 
   const isFiltering = query.trim().length > 0 || activeCategory !== "All";
-
-  // Scroll refs (unchanged)
-  const refs = {
-    featured: useRef(null),
-    allServices: useRef(null),
-    wizard: useRef(null),
-  };
-
-  const scrollTo = (key) => {
-    const el = refs[key]?.current;
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  // Lazy load heavy sections (unchanged)
-  const [showHeavySections, setShowHeavySections] = useState(false);
-  useEffect(() => {
-    const sentinel = document.getElementById("services-sentinel");
-    if (!sentinel) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setShowHeavySections(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    io.observe(sentinel);
-    return () => io.disconnect();
-  }, []);
 
   // Update modal state when service detail modal opens/closes
   useEffect(() => {
     setIsModalOpen(activeService !== null);
   }, [activeService, setIsModalOpen]);
 
-  const whatsappHref = useMemo(() => {
-    const cleaned = WHATSAPP_NUMBER.replace(/[^\d+]/g, "");
-    const wa = cleaned.startsWith("+") ? cleaned.slice(1) : cleaned;
-    return `https://wa.me/${wa}`;
-  }, [WHATSAPP_NUMBER]);
-
   if (loading) {
     return (
-      <main style={s.main}>
-        <div style={{ textAlign: "center", padding: "80px 20px" }}>
-          <p>Loading services...</p>
-        </div>
+      <main
+        style={{
+          background: theme.bg,
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+        }}
+      >
+        <p style={{ color: theme.navy, fontWeight: 600 }}>
+          Loading services...
+        </p>
       </main>
     );
   }
 
   return (
-    <main style={s.main} className="page-shell-services">
+    <main
+      style={{
+        background: theme.bg,
+        color: theme.navy,
+        fontFamily: "'Inter', system-ui, sans-serif",
+        overflowX: "hidden",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap');
-        * { box-sizing: border-box; }
-        .hover-card:hover {
-          transform: translateY(-6px);
-          box-shadow: ${theme.shadowHover};
-          border-color: rgba(14,165,233,0.35) !important;
-        }
+        
+        .hover-lift { transition: transform 0.25s ease, box-shadow 0.25s ease; height: 100%; display: flex; flex-direction: column; }
+        .hover-lift:hover { transform: translateY(-8px); box-shadow: ${theme.shadowHover}; z-index: 2; position: relative; }
+        
         .btn {
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
-          min-height: 50px;
-          padding: 0 24px;
-          border-radius: 999px;
+          padding: 12px 28px;
+          border-radius: 40px;
           font-weight: 700;
-          font-size: 0.95rem;
           text-decoration: none;
+          transition: all 0.2s;
           border: none;
           cursor: pointer;
-          transition: all 0.22s ease;
-          white-space: nowrap;
           font-family: 'Inter', system-ui;
         }
-        .btn:hover { transform: translateY(-2px); }
-        .btn-primary { background: ${theme.sky}; color: #fff; box-shadow: 0 8px 24px rgba(14,165,233,0.32); }
-        .btn-primary:hover { background: ${theme.skyHover}; box-shadow: 0 12px 32px rgba(14,165,233,0.40); }
-        .btn-outline { background: #fff; color: ${theme.sky}; border: 1.5px solid ${theme.sky}; }
-        .btn-outline:hover { background: ${theme.skyLight}; }
-        .btn-ghost { background: rgba(255,255,255,0.7); color: ${theme.navy}; border: 1.5px solid ${theme.border}; }
-        .btn-ghost:hover { background: #fff; }
-        .btn-danger { background: rgba(239,68,68,0.10); color: #b91c1c; border: 1.5px solid rgba(239,68,68,0.25); }
-        .btn-danger:hover { background: rgba(239,68,68,0.14); }
+        .btn-primary { background: ${theme.sky}; color: white; box-shadow: 0 8px 20px rgba(14,165,233,0.3); }
+        .btn-primary:hover { background: ${theme.skyHover}; transform: translateY(-2px); }
+        .btn-outline { background: transparent; border: 1.5px solid ${theme.sky}; color: ${theme.sky}; }
+        .btn-outline:hover { background: ${theme.skyLight}; transform: translateY(-2px); }
+        .btn-ghost { background: transparent; color: ${theme.slate}; }
+        .btn-ghost:hover { background: ${theme.borderLight}; color: ${theme.navy}; }
+
         .input {
           width: 100%;
-          min-height: 48px;
-          border-radius: 12px;
+          min-height: 54px;
+          border-radius: 40px;
           border: 1.5px solid ${theme.border};
-          background: ${theme.bg};
+          background: #fff;
           color: ${theme.navy};
-          padding: 0 14px;
-          font-size: 0.95rem;
+          padding: 0 24px;
+          font-size: 1rem;
           outline: none;
           font-family: 'Inter', system-ui;
-          transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
         .input:focus {
           border-color: ${theme.sky};
-          background: #fff;
-          box-shadow: 0 0 0 4px rgba(14,165,233,0.10);
+          box-shadow: 0 0 0 4px rgba(14,165,233,0.15);
         }
         
-        .tabs { display: flex; gap: 10px; overflow: auto; padding-bottom: 6px; scrollbar-width: none; }
+        .tabs { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
         .tabs::-webkit-scrollbar { display: none; }
         .tab {
           flex: 0 0 auto;
-          padding: 10px 14px;
-          border-radius: 999px;
+          padding: 10px 20px;
+          border-radius: 40px;
           border: 1px solid ${theme.border};
           background: #fff;
-          color: ${theme.navyMid};
-          font-weight: 800;
-          font-size: 0.82rem;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
+          color: ${theme.slate};
+          font-weight: 600;
+          font-size: 0.9rem;
           cursor: pointer;
-          transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+          transition: all 0.2s ease;
         }
-        .tab:hover { transform: translateY(-1px); border-color: rgba(14,165,233,0.35); background: ${theme.skyLight}; }
-        .tab-active { border-color: rgba(14,165,233,0.45); background: ${theme.skyLight}; color: ${theme.skyHover}; }
-        .grid-3 { display: grid; gap: 20px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .grid-2 { display: grid; gap: 20px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .tab:hover { border-color: ${theme.sky}; color: ${theme.sky}; }
+        .tab-active { background: ${theme.navy}; color: #fff; border-color: ${theme.navy}; }
+        
+        .grid-2 { display: grid; gap: 30px; grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { display: grid; gap: 30px; grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 1024px) { .grid-2, .grid-3 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
 
-        /* ---------- MODAL RESPONSIVE OVERHAUL ---------- */
+        /* Modal Overhaul */
         .modal-backdrop {
           position: fixed;
           inset: 0;
           z-index: 1000;
-          background: rgba(2, 8, 23, 0.60);
+          background: rgba(26, 46, 68, 0.4);
+          backdrop-filter: blur(8px);
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 16px;
+          padding: 20px;
           overflow-y: auto;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
         }
-        .modal-backdrop::-webkit-scrollbar { width: 0; height: 0; }
         .modal {
-          width: min(980px, 100%);
-          max-height: calc(100vh - 32px);
-          overflow-y: auto;
-          border-radius: 28px;
-          border: 1px solid ${theme.border};
+          width: min(900px, 100%);
+          max-height: calc(100vh - 40px);
           background: #fff;
-          box-shadow: 0 30px 100px rgba(2, 8, 23, 0.25);
+          border-radius: 32px;
+          box-shadow: 0 24px 80px rgba(0,0,0,0.2);
           display: flex;
           flex-direction: column;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
+          overflow: hidden;
         }
-        .modal::-webkit-scrollbar { width: 0; height: 0; }
         .modal-header {
+          padding: 30px;
+          background: ${theme.bg};
+          border-bottom: 1px solid ${theme.borderLight};
           display: flex;
-          align-items: flex-start;
           justify-content: space-between;
-          gap: 12px;
-          padding: 18px 18px 0;
+          align-items: flex-start;
           position: sticky;
           top: 0;
-          background: white;
-          border-radius: 28px 28px 0 0;
-          z-index: 2;
+          z-index: 10;
         }
         .modal-body {
-          padding: 18px;
+          padding: 30px;
+          overflow-y: auto;
           display: grid;
-          gap: 14px;
+          gap: 20px;
         }
 
-        /* For tablets and below: force single column grids everywhere */
-        @media (max-width: 1180px) {
-          .grid-3 { grid-template-columns: 1fr !important; }
-          .grid-2 { grid-template-columns: 1fr !important; }
-          .cta-banner { flex-direction: column; align-items: flex-start !important; }
-          .floating-cta { left: 16px; right: 16px; grid-template-columns: 1fr; }
-          .floating-cta .btn { width: 100%; }
+        .ambient-glow {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          z-index: 0;
+          opacity: 0.5;
+          animation: float 8s ease-in-out infinite;
         }
-
-        /* Phone optimisations for modal header & scrolling */
-        @media (max-width: 600px) {
-          .modal-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-            padding: 16px 16px 0;
-          }
-          .modal-header .btn-ghost {
-            align-self: flex-end;
-            margin-top: -8px;
-            min-height: 40px;
-            padding: 0 16px;
-            font-size: 0.85rem;
-          }
-          .modal-body {
-            padding: 16px;
-          }
-          .modal {
-            border-radius: 24px;
-          }
-          .modal-header {
-            border-radius: 24px 24px 0 0;
-          }
-        }
-
-        @media (max-width: 820px) {
-          .cta-actions { flex-direction: column; width: 100%; }
-          .btn { width: 100%; }
+        @keyframes float {
+          0% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-20px) scale(1.05); }
+          100% { transform: translateY(0px) scale(1); }
         }
       `}</style>
 
-      {/* Sticky Smart Service Navigation */}
-      <AnimatedSection style={s.sectionBand}>
-        <div style={s.sectionShell}>
-          <div className="sticky-nav">
+      {/* ========== HERO SECTION & SEARCH ========== */}
+      <section
+        style={{
+          position: "relative",
+          padding: "120px 0 60px",
+          background: `linear-gradient(145deg, #e0f2fe 0%, #ffffff 100%)`,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          className="ambient-glow"
+          style={{
+            width: "400px",
+            height: "400px",
+            background: accentColors[4].light,
+            top: "-100px",
+            right: "-100px",
+          }}
+        />
+        <div
+          className="ambient-glow"
+          style={{
+            width: "300px",
+            height: "300px",
+            background: accentColors[0].light,
+            bottom: "-50px",
+            left: "-50px",
+            animationDelay: "2s",
+          }}
+        />
+
+        <div
+          style={{
+            width: theme.container,
+            margin: "0 auto",
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+          <div
+            style={{
+              textAlign: "center",
+              maxWidth: "1000px",
+              margin: "0 auto 40px",
+            }}
+          >
+            <h1
+              style={{
+                fontFamily: "'DM Serif Display', serif",
+                fontSize: "clamp(1.6rem, 6vw, 3.5rem)",
+                lineHeight: 1.1,
+                margin: "0 0 20px",
+                color: theme.navy,
+              }}
+            >
+              Advanced Care.{" "}
+              <em style={{ color: theme.sky }}>Exceptional Outcomes.</em>
+            </h1>
+            <p
+              style={{
+                color: theme.slate,
+                fontSize: "1.1rem",
+                lineHeight: 1.7,
+              }}
+            >
+              Explore our comprehensive range of eye care services, from routine
+              checkups to state-of-the-art surgical procedures.
+            </p>
+          </div>
+
+          {/* Search and Tabs Container */}
+          <div
+            style={{
+              maxWidth: "100%",
+              margin: "0 auto",
+              background: "rgba(255,255,255,0.6)",
+              padding: "10px",
+              borderRadius: "32px",
+              backdropFilter: "blur(12px)",
+              border: `1px solid ${theme.borderLight}`,
+              boxShadow: theme.shadow,
+            }}
+          >
             <input
               className="input"
-              style={{ marginTop: "20px" }}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search treatment (e.g., LASIK, Cataract)"
+              placeholder="🔍 Search for a treatment (e.g., LASIK, Cataract)"
               aria-label="Search services"
             />
           </div>
         </div>
-      </AnimatedSection>
+      </section>
 
-      {/* Featured Section (only when not filtering) */}
+      {/* ========== HIGH DEMAND SERVICES (FEATURED) ========== */}
       {!isFiltering && featuredServices.length > 0 && (
-        <AnimatedSection style={s.sectionBand}>
-          <div style={s.sectionShell} ref={refs.featured}>
-            <div style={s.sectionHead}>
-              <div style={{ ...s.eyebrow, marginTop: "40px" }}>
-                Our Services
-              </div>
-              <h2 style={s.h2}>High Demand Services</h2>
-              <p style={s.p}>
-                Benefits + quick actions, in a calm light theme.
+        <section style={{ padding: "80px 0", background: theme.bg }}>
+          <div style={{ width: theme.container, margin: "0 auto" }}>
+            <div style={{ marginBottom: "40px" }}>
+              <h2
+                style={{
+                  fontFamily: "'DM Serif Display', serif",
+                  fontSize: "clamp(1.6rem, 5vw, 2.2rem)",
+                  margin: "0 0 10px",
+                  color: theme.navy,
+                }}
+              >
+                High Demand Services
+              </h2>
+              <p style={{ color: theme.slate, margin: 0 }}>
+                The most requested procedures by our patients.
               </p>
             </div>
-            <div className="grid-3" style={{ marginTop: "28px" }}>
-              {featuredServices.map((svc, idx) => (
-                <article
-                  className="hover-card"
-                  key={svc._id}
-                  style={{
-                    ...s.card,
-                    borderTop: `3px solid ${theme.sky}`,
-                    background: "linear-gradient(135deg, #ffffff, #f8fafc)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "10px",
-                    }}
-                  >
-                    <span style={s.cardCode}>
-                      {String(idx + 1).padStart(2, "0")}
-                    </span>
-                    <span
-                      style={{
-                        ...s.tag,
-                        background: theme.skyLight,
-                        borderColor: "rgba(14,165,233,0.25)",
-                        color: theme.skyHover,
-                      }}
-                    >
-                      Featured
-                    </span>
-                  </div>
-                  <h3
-                    style={{
-                      fontFamily: "'DM Serif Display', serif",
-                      fontSize: "1.6rem",
-                      margin: "14px 0 8px",
-                      color: theme.navy,
-                    }}
-                  >
-                    {svc.title}
-                  </h3>
-                  <p style={{ ...s.p, marginTop: 0, fontSize: "0.98rem" }}>
-                    {svc.description}
-                  </p>
-                  <div
-                    style={{ display: "grid", gap: "10px", marginTop: "14px" }}
-                  >
-                    <div style={{ color: theme.navy, fontWeight: 800 }}>
-                      Benefits
-                    </div>
-                    <div
-                      style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}
-                    >
-                      {(svc.benefits || []).slice(0, 3).map((b) => (
-                        <span key={b} style={s.pill}>
-                          {b}
-                        </span>
-                      ))}
-                    </div>
-                    <div
-                      style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}
-                    >
-                      <span style={s.pill}>
-                        Success: {svc.successRate || "Varies"}
-                      </span>
-                      <span style={s.pill}>
-                        Recovery: {svc.recovery || "Varies"}
-                      </span>
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "10px",
-                      flexWrap: "nowrap",
-                      marginTop: "18px",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      className="btn btn-outline"
-                      style={{ minHeight: "46px", flex: "1 1 0", minWidth: 0 }}
-                      onClick={() => setActiveService(svc)}
-                    >
-                      Learn More
-                    </button>
-                    <Link
-                      className="btn btn-primary"
-                      style={{ minHeight: "46px", flex: "1 1 0", minWidth: 0 }}
-                      to="/appointment"
-                    >
-                      Book Now
-                    </Link>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </AnimatedSection>
-      )}
 
-      {/* All Services (always visible) */}
-      <AnimatedSection style={{ ...s.sectionBand, background: "#fff" }}>
-        <div style={s.sectionShell} ref={refs.allServices}>
-          <div style={s.sectionHead}>
-            <div style={{ ...s.eyebrow, marginTop: "100px" }}>
-              {isFiltering ? "Search Results" : "All Services"}
-            </div>
-            <h2 style={s.h2}>
-              {isFiltering ? "Matching treatments." : "Browse every treatment."}
-            </h2>
-            <p style={s.p}>
-              {isFiltering
-                ? "Showing only services that match your search and selected category."
-                : "Same interactions, smoother light UI."}
-            </p>
-          </div>
-          <div className="grid-3" style={{ marginTop: "28px" }}>
-            {filteredServices.map((svc) => (
-              <article key={svc._id} className="hover-card" style={s.card}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    gap: "8px",
-                  }}
-                >
-                  <div>
+            <div className="grid-3">
+              {featuredServices.map((svc, idx) => {
+                const accent = accentColors[idx % accentColors.length];
+                return (
+                  <article
+                    key={svc._id}
+                    className="hover-lift"
+                    style={{
+                      background: theme.white,
+                      borderRadius: "32px",
+                      padding: "32px",
+                      border: `1px solid ${theme.border}`,
+                      borderBottom: `4px solid ${accent.primary}`,
+                      boxShadow: theme.shadow,
+                    }}
+                  >
                     <div
                       style={{
-                        ...s.eyebrow,
-                        margin: 0,
-                        fontSize: "0.72rem",
-                        padding: "6px 12px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        marginBottom: "20px",
                       }}
                     >
-                      {svc.category}
+                      <div
+                        style={{
+                          fontSize: "2rem",
+                          background: accent.light,
+                          width: "60px",
+                          height: "60px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: "16px",
+                          color: accent.primary,
+                        }}
+                      >
+                        🩺
+                      </div>
+                      <span
+                        style={{
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          padding: "6px 12px",
+                          background: theme.skyLight,
+                          color: theme.sky,
+                          borderRadius: "20px",
+                        }}
+                      >
+                        Featured
+                      </span>
                     </div>
+
                     <h3
                       style={{
                         fontFamily: "'DM Serif Display', serif",
-                        fontSize: "1.2rem",
-                        margin: "12px 0 6px",
+                        fontSize: "1.6rem",
+                        margin: "0 0 12px",
                         color: theme.navy,
                       }}
                     >
                       {svc.title}
                     </h3>
-                  </div>
-                  <div
-                    style={{ display: "grid", gap: "8px", justifyItems: "end" }}
-                  >
-                    {(svc.tags || []).slice(0, 2).map((t) => (
-                      <span
-                        key={t}
+                    <p
+                      style={{
+                        color: theme.slate,
+                        fontSize: "0.95rem",
+                        lineHeight: 1.6,
+                        margin: "0 0 20px",
+                      }}
+                    >
+                      {svc.description}
+                    </p>
+
+                    <div style={{ flexGrow: 1, marginBottom: "24px" }}>
+                      <div
                         style={{
-                          ...s.tag,
-                          background:
-                            t === "Popular"
-                              ? theme.skyLight
-                              : theme.borderLight,
-                          borderColor:
-                            t === "Popular"
-                              ? "rgba(14,165,233,0.30)"
-                              : theme.border,
-                          color:
-                            t === "Popular" ? theme.skyHover : theme.navyMid,
+                          fontSize: "0.85rem",
+                          fontWeight: 700,
+                          color: theme.navy,
+                          marginBottom: "8px",
                         }}
                       >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <p style={{ ...s.p, marginTop: "10px", fontSize: "0.98rem" }}>
-                  {svc.description}
-                </p>
-                <div
+                        Top Benefits:
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        {(svc.benefits || ["Clearer vision", "Quick recovery"])
+                          .slice(0, 3)
+                          .map((b) => (
+                            <span
+                              key={b}
+                              style={{
+                                fontSize: "0.75rem",
+                                padding: "6px 12px",
+                                background: theme.borderLight,
+                                color: theme.navyMid,
+                                borderRadius: "20px",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {b}
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "10px" }}>
+                      <button
+                        className="btn btn-outline"
+                        style={{
+                          flex: 1,
+                          borderColor: accent.primary,
+                          color: accent.primary,
+                          fontSize: "clamp(0.75rem, 2vw, 1rem)",
+                        }}
+                        onClick={() => setActiveService(svc)}
+                      >
+                        Details
+                      </button>
+                      <Link
+                        to="/appointment"
+                        className="btn btn-primary"
+                        style={{
+                          flex: 1,
+                          background: accent.primary,
+                          boxShadow: `0 8px 20px ${accent.light}`,
+                          fontSize: "clamp(0.75rem, 2vw, 1rem)",
+                        }}
+                      >
+                        Book Now
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========== ALL SERVICES ========== */}
+      <section
+        style={{
+          padding: "80px 0",
+          background: theme.white,
+          borderTop: `1px solid ${theme.borderLight}`,
+        }}
+      >
+        <div style={{ width: theme.container, margin: "0 auto" }}>
+          <div style={{ marginBottom: "40px" }}>
+            <h2
+              style={{
+                fontFamily: "'DM Serif Display', serif",
+                fontSize: "2.2rem",
+                margin: "0 0 10px",
+                color: theme.navy,
+              }}
+            >
+              {isFiltering ? "Search Results" : "All Treatments"}
+            </h2>
+            <p style={{ color: theme.slate, margin: 0 }}>
+              {isFiltering
+                ? `Showing matches for "${query}" in ${activeCategory}`
+                : "Browse our complete catalog of eye care solutions."}
+            </p>
+          </div>
+
+          <div className="grid-3">
+            {filteredServices.map((svc, idx) => {
+              // Shift the accent index to provide variety from the featured block
+              const accent = accentColors[(idx + 3) % accentColors.length];
+              return (
+                <article
+                  key={svc._id}
+                  className="hover-lift"
                   style={{
-                    display: "flex",
-                    gap: "10px",
-                    flexWrap: "nowrap",
-                    marginTop: "16px",
+                    background: theme.bg,
+                    borderRadius: "28px",
+                    padding: "28px",
+                    border: `1px solid ${theme.border}`,
+                    borderBottom: `4px solid ${accent.primary}`,
                   }}
                 >
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    style={{ minHeight: "46px", flex: "1 1 0", minWidth: 0 }}
-                    onClick={() => setActiveService(svc)}
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      padding: "4px 10px",
+                      background: theme.borderLight,
+                      color: theme.slate,
+                      borderRadius: "20px",
+                      display: "inline-block",
+                      marginBottom: "16px",
+                    }}
                   >
-                    Learn More
-                  </button>
-                  <Link
-                    className="btn btn-primary"
-                    style={{ minHeight: "46px", flex: "1 1 0", minWidth: 0 }}
-                    to="/appointment"
+                    {svc.category}
+                  </div>
+
+                  <h3
+                    style={{
+                      fontFamily: "'DM Serif Display', serif",
+                      fontSize: "1.4rem",
+                      margin: "0 0 12px",
+                      color: theme.navy,
+                    }}
                   >
-                    Book Now
-                  </Link>
-                </div>
-              </article>
-            ))}
+                    {svc.title}
+                  </h3>
+
+                  <p
+                    style={{
+                      color: theme.slate,
+                      fontSize: "0.95rem",
+                      lineHeight: 1.6,
+                      margin: "0 0 20px",
+                      flexGrow: 1,
+                    }}
+                  >
+                    {svc.description}
+                  </p>
+
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <button
+                      className="btn btn-outline"
+                      style={{
+                        flex: 1,
+                        borderColor: accent.primary,
+                        color: accent.primary,
+                        fontSize: "clamp(0.82rem, 2.8vw, 0.95rem)",
+                      }}
+                      onClick={() => setActiveService(svc)}
+                    >
+                      Learn More
+                    </button>
+                    <Link
+                      to="/appointment"
+                      className="btn btn-primary"
+                      style={{
+                        flex: 1,
+                        background: accent.primary,
+                        fontSize: "clamp(0.82rem, 2.8vw, 0.95rem)",
+                      }}
+                    >
+                      Book Now
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
           </div>
+
           {filteredServices.length === 0 && (
-            <div style={{ ...s.card, marginTop: "22px" }}>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                background: theme.bg,
+                borderRadius: "32px",
+                border: `1px dashed ${theme.border}`,
+              }}
+            >
+              <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🧐</div>
               <h3
                 style={{
                   fontFamily: "'DM Serif Display', serif",
-                  fontSize: "1.6rem",
-                  margin: 0,
+                  fontSize: "1.8rem",
+                  margin: "0 0 10px",
                   color: theme.navy,
                 }}
               >
                 No matches found.
               </h3>
-              <p style={s.p}>
-                Try a different search (example: “LASIK”, “Cataract”, “Retina”).
+              <p style={{ color: theme.slate }}>
+                We couldn't find any services matching your current filters. Try
+                adjusting your search or category.
               </p>
+              <button
+                className="btn btn-outline"
+                style={{ marginTop: "20px" }}
+                onClick={() => {
+                  setQuery("");
+                  setActiveCategory("All");
+                }}
+              >
+                Clear Filters
+              </button>
             </div>
           )}
         </div>
-      </AnimatedSection>
+      </section>
 
-      {/* Service Detail Modal */}
+      {/* ========== SERVICE DETAIL MODAL ========== */}
       {activeService && (
         <div
           className="modal-backdrop"
@@ -648,148 +658,226 @@ export default function ServicesPage() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
-                <div style={s.eyebrow}>{activeService.category}</div>
-                <h3 style={{ ...s.h2, fontSize: "clamp(1.6rem, 4vw, 2.2rem)" }}>
+                <span
+                  style={{
+                    fontSize: "clamp(0.7rem, 2.4vw, 0.75rem)",
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    background: theme.skyLight,
+                    color: theme.sky,
+                    borderRadius: "20px",
+                    display: "inline-block",
+                    marginBottom: "12px",
+                  }}
+                >
+                  {activeService.category}
+                </span>
+                <h3
+                  style={{
+                    fontFamily: "'DM Serif Display', serif",
+                    fontSize: "clamp(1.1rem, 5vw, 2.4rem)",
+                    margin: 0,
+                    color: theme.navy,
+                  }}
+                >
                   {activeService.title}
                 </h3>
-                <p style={{ ...s.p, marginTop: 10 }}>
-                  {activeService.description}
-                </p>
               </div>
               <button
                 className="btn btn-ghost"
-                type="button"
+                style={{ padding: "8px 16px" }}
                 onClick={() => setActiveService(null)}
-                aria-label="Close modal"
               >
-                Close
+                Close ✕
               </button>
             </div>
+
             <div className="modal-body">
+              <p
+                style={{
+                  color: theme.slate,
+                  fontSize: "clamp(0.95rem, 3.6vw, 1.1rem)",
+                  lineHeight: 1.6,
+                  margin: "0 0 10px",
+                }}
+              >
+                {activeService.description}
+              </p>
+
               <div className="grid-2">
-                <div style={{ ...s.card, padding: "18px", boxShadow: "none" }}>
-                  <div style={{ color: theme.navy, fontWeight: 800 }}>
+                <div
+                  style={{
+                    background: theme.bg,
+                    padding: "2px",
+                    borderRadius: "24px",
+                    border: `1px solid ${theme.borderLight}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      color: theme.navy,
+                      fontWeight: 800,
+                      marginBottom: "12px",
+                      fontSize: "clamp(0.95rem, 3.2vw, 1.1rem)",
+                    }}
+                  >
                     Overview
                   </div>
-                  <p style={{ ...s.p, marginTop: 10 }}>
+                  <p style={{ color: theme.slate, margin: 0, lineHeight: 1.6 }}>
                     {activeService.overview ||
-                      "This section can explain the condition/service in plain language, what it solves, and who it’s for."}
+                      "This comprehensive treatment is designed to restore and protect your vision using the latest medical advancements. Our specialists will guide you through every step of the process."}
                   </p>
                 </div>
-                <div style={{ ...s.card, padding: "18px", boxShadow: "none" }}>
-                  <div style={{ color: theme.navy, fontWeight: 800 }}>
-                    Procedure & recovery
+
+                <div
+                  style={{
+                    background: theme.bg,
+                    padding: "2px",
+                    borderRadius: "24px",
+                    border: `1px solid ${theme.borderLight}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      color: theme.navy,
+                      fontWeight: 800,
+                      marginBottom: "12px",
+                      fontSize: "clamp(0.95rem, 3.2vw, 1.1rem)",
+                    }}
+                  >
+                    Procedure & Recovery
                   </div>
                   <div
                     style={{
                       display: "flex",
                       gap: "10px",
                       flexWrap: "wrap",
-                      marginTop: "12px",
+                      marginBottom: "16px",
                     }}
                   >
-                    <span style={s.pill}>
-                      Success: {activeService.successRate || "Varies"}
+                    <span
+                      style={{
+                        fontSize: "clamp(0.78rem, 2.8vw, 0.85rem)",
+                        padding: "6px 14px",
+                        background: "white",
+                        border: `1px solid ${theme.border}`,
+                        borderRadius: "20px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Success Rate: {activeService.successRate || "High"}
                     </span>
-                    <span style={s.pill}>
+                    <span
+                      style={{
+                        fontSize: "clamp(0.78rem, 2.8vw, 0.85rem)",
+                        padding: "6px 14px",
+                        background: "white",
+                        border: `1px solid ${theme.border}`,
+                        borderRadius: "20px",
+                        fontWeight: 600,
+                      }}
+                    >
                       Recovery: {activeService.recovery || "Varies"}
                     </span>
-                    <span style={s.pill}>
-                      Cost: {activeService.cost || "—"}
-                    </span>
                   </div>
-                  <p style={{ ...s.p, marginTop: 12 }}>
+                  <p
+                    style={{
+                      color: theme.slate,
+                      margin: 0,
+                      lineHeight: 1.6,
+                      fontSize: "clamp(0.85rem, 3vw, 0.95rem)",
+                    }}
+                  >
                     {activeService.procedureSteps ||
-                      "Add short steps here: screening → planning → procedure → aftercare. Keep it scannable to reduce drop-off."}
+                      "Consultation → Personalized Planning → Procedure → Post-op Care"}
                   </p>
                 </div>
               </div>
+
               <div className="grid-2">
-                <div style={{ ...s.card, padding: "18px", boxShadow: "none" }}>
-                  <div style={{ color: theme.navy, fontWeight: 800 }}>
-                    Symptoms (example)
+                <div
+                  style={{
+                    background: theme.bg,
+                    padding: "2px",
+                    borderRadius: "24px",
+                    border: `1px solid ${theme.borderLight}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      color: theme.navy,
+                      fontWeight: 800,
+                      marginBottom: "12px",
+                      fontSize: "clamp(0.95rem, 3.2vw, 1.1rem)",
+                    }}
+                  >
+                    Common Symptoms Addressed
                   </div>
                   <ul
                     style={{
-                      display: "grid",
-                      gap: "10px",
                       margin: 0,
-                      paddingLeft: 18,
+                      paddingLeft: "20px",
                       color: theme.slate,
+                      lineHeight: 1.8,
+                      fontSize: "clamp(0.88rem, 3vw, 1rem)",
                     }}
                   >
                     {(activeService.symptoms && activeService.symptoms.length
                       ? activeService.symptoms
                       : [
-                          "Blurred vision",
-                          "Headaches / strain",
-                          "Difficulty seeing at night",
+                          "Blurry or distorted vision",
+                          "Eye strain or fatigue",
+                          "Difficulty focusing",
                         ]
-                    ).map((x) => (
-                      <li key={x}>{x}</li>
+                    ).map((sym) => (
+                      <li key={sym}>{sym}</li>
                     ))}
                   </ul>
                 </div>
-                <div style={{ ...s.card, padding: "18px", boxShadow: "none" }}>
-                  <div style={{ color: theme.navy, fontWeight: 800 }}>
-                    Risks & safety
+                <div
+                  style={{
+                    background: theme.bg,
+                    padding: "2px",
+                    borderRadius: "24px",
+                    border: `1px solid ${theme.borderLight}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      color: theme.navy,
+                      fontWeight: 800,
+                      marginBottom: "12px",
+                      fontSize: "clamp(0.95rem, 3.2vw, 1.1rem)",
+                    }}
+                  >
+                    Safety & Risks
                   </div>
-                  <p style={{ ...s.p, marginTop: 10 }}>
+                  <p style={{ color: theme.slate, margin: 0, lineHeight: 1.6 }}>
                     {activeService.risks ||
-                      "Every procedure has risks. This block should clearly explain screening, candidacy, and how risks are reduced."}
+                      "Patient safety is our highest priority. During your consultation, your doctor will discuss your specific candidacy and how we minimize any potential risks associated with this treatment."}
                   </p>
                 </div>
               </div>
-              <div style={{ ...s.card, padding: "18px", boxShadow: "none" }}>
-                <div style={{ color: theme.navy, fontWeight: 800 }}>FAQs</div>
-                <div
-                  style={{ display: "grid", gap: "10px", marginTop: "12px" }}
+
+              {/* Modal Footer CTA */}
+              <div
+                style={{
+                  borderRadius: "24px",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "16px",
+                  marginTop: "10px",
+                }}
+              >
+                <Link
+                  className="btn btn-primary"
+                  to="/appointment"
+                  onClick={() => setActiveService(null)}
                 >
-                  {(activeService.faqs && activeService.faqs.length
-                    ? activeService.faqs
-                    : [
-                        {
-                          q: "How do I book?",
-                          a: "Tap Book Appointment and choose a time.",
-                        },
-                      ]
-                  ).map((x) => (
-                    <div
-                      key={x.q}
-                      style={{
-                        padding: "12px",
-                        borderRadius: "16px",
-                        border: `1px solid ${theme.border}`,
-                        background: theme.bg,
-                      }}
-                    >
-                      <div style={{ fontWeight: 800, color: theme.navy }}>
-                        {x.q}
-                      </div>
-                      <div
-                        style={{
-                          color: theme.slate,
-                          marginTop: "6px",
-                          lineHeight: 1.7,
-                        }}
-                      >
-                        {x.a}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "10px",
-                    flexWrap: "wrap",
-                    marginTop: "16px",
-                  }}
-                >
-                  <Link className="btn btn-primary" to="/appointment">
-                    Book Appointment
-                  </Link>
-                </div>
+                  Book This Treatment
+                </Link>
               </div>
             </div>
           </div>
