@@ -230,16 +230,28 @@ export default function HomePage() {
         }
         @media (max-width: 768px) {
           .scroll-item { flex: 0 0 100%; min-width: unset; }
+          .hero-section {
+            padding-top: 50px !important;
+            padding-bottom: 20px !important;
+          }
+          .secondary-hero-section {
+            padding-top: 80px !important;
+          }
+          .hero-image-frame {
+            aspect-ratio: 3/4 !important;
+            min-height: 420px;
+          }
         }
       `}</style>
 
       {/* ===== HERO SECTION ===== */}
       <section
+        className="hero-section"
         style={{
           padding: "120px 0",
           background: "white",
           overflow: "hidden",
-          minHeight: "100vh",
+          minHeight: "80vh",
           display: "flex",
           alignItems: "center",
         }}
@@ -254,6 +266,7 @@ export default function HomePage() {
               style={{ position: "relative" }}
             >
               <div
+                className="hero-image-frame"
                 style={{
                   aspectRatio: "4/3",
                   borderRadius: "40px",
@@ -343,7 +356,7 @@ export default function HomePage() {
               <div
                 style={{
                   display: "flex",
-                  gap: "10px",
+                  gap: "8px",
                   flexWrap: "nowrap",
                   marginBottom: "32px",
                 }}
@@ -537,6 +550,7 @@ export default function HomePage() {
       </section>
 
       <section
+        className="secondary-hero-section"
         ref={heroRef}
         style={{
           position: "relative",
@@ -582,16 +596,14 @@ export default function HomePage() {
                 <h1
                   style={{
                     fontFamily: "'DM Serif Display', serif",
-                    fontSize: "clamp(2rem, 5vw, 4rem)",
+                    fontSize: "clamp(1.85rem, 4.5vw, 3.5rem)",
                     lineHeight: 1.05,
                     margin: "0 0 20px",
                     color: theme.navy,
                   }}
                 >
                   Your Vision,
-                  <em style={{ color: theme.sky, fontStyle: "italic" }}>
-                    Our Promise
-                  </em>
+                  <em style={{ color: theme.sky }}>Our Promise</em>
                 </h1>
                 <p
                   style={{
@@ -1069,7 +1081,7 @@ export default function HomePage() {
                 Take the first step toward clearer vision. Our team is here to
                 answer your questions and schedule your visit.
               </p>
-              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "nowrap" }}>
                 <Link to="/appointment" className="btn btn-primary">
                   Book Appointment →
                 </Link>

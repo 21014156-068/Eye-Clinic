@@ -22,7 +22,7 @@ export const navigation = [
   { label: "Services", to: "/services" },
   { label: "Technology", to: "/technology" },
   { label: "Doctors", to: "/doctors" },
-  { label: "Gallery", to: "/gallery" },
+
   { label: "Contact", to: "/contact" },
 ];
 

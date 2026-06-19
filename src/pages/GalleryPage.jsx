@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatedSection } from "../components/AnimatedSection";
 import { galleryPage } from "../data/siteContent";
+import { useModal } from "../hooks/ModalContext";
 
 const atmosphereNotes = [
   {
@@ -19,6 +20,8 @@ const atmosphereNotes = [
 ];
 
 export default function GalleryPage() {
+  const { setIsModalOpen } = useModal();
+
   // Update these quickly
   const WHATSAPP_NUMBER = "+0000000000"; // <-- change
   const PRIMARY_PHONE = "+0000000000"; // <-- change
@@ -39,8 +42,10 @@ export default function GalleryPage() {
     borderLight: "#f1f5f9",
     radiusXL: "36px",
     radiusLG: "28px",
-    shadow: "0 4px 24px rgba(14, 165, 233, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06)",
-    shadowStrong: "0 20px 60px rgba(2, 8, 23, 0.14), 0 2px 10px rgba(2, 8, 23, 0.08)",
+    shadow:
+      "0 4px 24px rgba(14, 165, 233, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06)",
+    shadowStrong:
+      "0 20px 60px rgba(2, 8, 23, 0.14), 0 2px 10px rgba(2, 8, 23, 0.08)",
     containerWide: "min(1520px, calc(100% - 24px))",
   };
 
@@ -163,8 +168,10 @@ export default function GalleryPage() {
         type: "image",
         category: "Clinic Infrastructure",
         title: "Operation Theatre",
-        caption: "A sterile, premium surgical environment designed for precision.",
-        description: "Designed for safety-first workflows, clinical control, and patient comfort.",
+        caption:
+          "A sterile, premium surgical environment designed for precision.",
+        description:
+          "Designed for safety-first workflows, clinical control, and patient comfort.",
         src: "/assets/gallery/op-theatre.jpg",
         tags: ["operation room", "surgery", "sterile"],
         featured: true,
@@ -175,7 +182,8 @@ export default function GalleryPage() {
         category: "Technology & Equipment",
         title: "Advanced Laser System",
         caption: "High-precision laser platform for refractive planning.",
-        description: "Supports accuracy, safety checks, and predictable outcomes.",
+        description:
+          "Supports accuracy, safety checks, and predictable outcomes.",
         src: "/assets/gallery/laser.jpg",
         tags: ["LASIK", "laser", "technology"],
         featured: true,
@@ -186,7 +194,8 @@ export default function GalleryPage() {
         category: "Doctors & Staff",
         title: "Doctor at Work",
         caption: "Specialist-led care at every step.",
-        description: "Every scan is interpreted by clinicians with structured decision support.",
+        description:
+          "Every scan is interpreted by clinicians with structured decision support.",
         src: "/assets/gallery/doctor-work.jpg",
         tags: ["doctor", "consultation"],
         featured: true,
@@ -197,7 +206,8 @@ export default function GalleryPage() {
         category: "Clinic Infrastructure",
         title: "Clinic Tour (Video)",
         caption: "Walk through the environment before your visit.",
-        description: "A quick overview of reception, diagnostics, and treatment spaces.",
+        description:
+          "A quick overview of reception, diagnostics, and treatment spaces.",
         videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
         tags: ["tour", "clinic"],
       },
@@ -280,6 +290,10 @@ export default function GalleryPage() {
       document.body.classList.remove("gallery-lightbox-open");
     };
   }, [lightboxItem]);
+
+  useEffect(() => {
+    setIsModalOpen(lightboxItem !== null);
+  }, [lightboxItem, setIsModalOpen]);
 
   // -------------------------------------------------------
   // Smooth scroll sections (refs kept for future internal jumps)
@@ -676,7 +690,8 @@ export default function GalleryPage() {
               <div style={{ ...s.card, marginTop: 18 }}>
                 <h3 style={{ ...s.h3, margin: 0 }}>No results found.</h3>
                 <p style={s.p}>
-                  Add images/videos to your gallery data and they will show here.
+                  Add images/videos to your gallery data and they will show
+                  here.
                 </p>
               </div>
             )}
@@ -704,7 +719,15 @@ export default function GalleryPage() {
                   </p>
                 </div>
                 {/* actions row (zoom, prev, next, close) */}
-                <div className="lightbox-actions" style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                <div
+                  className="lightbox-actions"
+                  style={{
+                    display: "flex",
+                    gap: 10,
+                    flexWrap: "wrap",
+                    justifyContent: "flex-end",
+                  }}
+                >
                   <button
                     className="button button-ghost"
                     type="button"
@@ -800,8 +823,8 @@ export default function GalleryPage() {
               <span style={s.eyebrow}>Outcomes</span>
               <h2 style={s.h2}>Before & After Results</h2>
               <p style={s.p}>
-                Drag the slider to compare. Add real patient outcomes only if you
-                have consent and compliance approval.
+                Drag the slider to compare. Add real patient outcomes only if
+                you have consent and compliance approval.
               </p>
             </div>
 
@@ -901,20 +924,44 @@ export default function GalleryPage() {
           <div style={s.sectionShell}>
             <div className="cta-banner">
               <div style={{ maxWidth: "720px" }}>
-                <span style={{ ...s.eyebrow, background: "rgba(255,255,255,0.10)", color: "#fff", borderColor: "rgba(255,255,255,0.18)" }}>
+                <span
+                  style={{
+                    ...s.eyebrow,
+                    background: "rgba(255,255,255,0.10)",
+                    color: "#fff",
+                    borderColor: "rgba(255,255,255,0.18)",
+                  }}
+                >
                   Conversion
                 </span>
                 <h1 style={{ color: "#fff" }}>
                   Experience our advanced eye care facility firsthand
                 </h1>
                 <p style={{ ...s.p, color: "rgba(255,255,255,0.75)" }}>
-                  Book an appointment or schedule a visit—our team will guide your next step.
+                  Book an appointment or schedule a visit—our team will guide
+                  your next step.
                 </p>
-                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: 24 }} className="cta-actions">
-                  <Link to="/book-appointment" className="button button-primary">
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "14px",
+                    flexWrap: "wrap",
+                    marginTop: 24,
+                  }}
+                  className="cta-actions"
+                >
+                  <Link
+                    to="/book-appointment"
+                    className="button button-primary"
+                  >
                     Book Appointment
                   </Link>
-                  <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="button button-secondary">
+                  <a
+                    href={whatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="button button-secondary"
+                  >
                     WhatsApp
                   </a>
                 </div>
