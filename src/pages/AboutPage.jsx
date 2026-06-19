@@ -50,7 +50,17 @@ export default function AboutPage() {
   };
 
   const heroRef = useRef(null);
+  const doctorsSliderRef = useRef(null);
   const isHeroVisible = useInView(heroRef, { once: true, margin: "-100px" });
+
+  const scrollDoctors = (direction) => {
+    if (!doctorsSliderRef.current) return;
+    const amount = doctorsSliderRef.current.clientWidth;
+    doctorsSliderRef.current.scrollBy({
+      left: direction === "left" ? -amount : amount,
+      behavior: "smooth",
+    });
+  };
 
   // Helper
   const getInitials = (name) => {
@@ -154,6 +164,22 @@ export default function AboutPage() {
         .grid-4 { display: grid; gap: 30px; grid-template-columns: repeat(4, 1fr); }
         @media (max-width: 1024px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+        .doctor-carousel {
+          display: flex;
+          gap: 24px;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          padding-bottom: 6px;
+        }
+        .doctor-carousel::-webkit-scrollbar { display: none; }
+        .doctor-carousel-item {
+          flex: 0 0 100%;
+          max-width: 100%;
+          scroll-snap-align: center;
+        }
         
         /* Floating Glow Animation */
         .ambient-glow {
@@ -169,13 +195,16 @@ export default function AboutPage() {
           50% { transform: translateY(-20px) scale(1.05); }
           100% { transform: translateY(0px) scale(1); }
         }
+        @media (max-width: 768px) {
+          [data-hero-section] { padding: 40px 0 60px !important; }
+        }
       `}</style>
 
       {/* ========== HERO / OUR STORY ========== */}
       <section
         ref={heroRef}
         style={{
-          padding: "140px 0 100px",
+          padding: "80px 0 100px",
           background: `linear-gradient(145deg, #e0f2fe 0%, #ffffff 100%)`,
           position: "relative",
           overflow: "hidden",
@@ -568,30 +597,58 @@ export default function AboutPage() {
           ) : featuredDoctors.length === 0 ? (
             <div>No doctors found in database.</div>
           ) : (
-            <motion.div
-              className="grid-3"
-              variants={stagger}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-            >
-              {featuredDoctors.map((doc, i) => {
-                const docAccent = accentColors[(i + 2) % accentColors.length]; // Offset color index for variety
-                return (
-                  <motion.div
-                    key={doc._id}
-                    variants={fadeUp}
-                    className="hover-lift"
-                    style={{
-                      background: `linear-gradient(145deg, ${theme.white}, ${theme.bg})`,
-                      borderRadius: "32px",
-                      padding: "28px",
-                      border: `1px solid ${theme.border}`,
-                      position: "relative",
-                      transition: "all 0.3s ease",
-                      textAlign: "center",
-                    }}
-                  >
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 12,
+                  marginBottom: 20,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => scrollDoctors("left")}
+                  className="btn btn-outline"
+                  style={{ padding: "8px 16px", minWidth: 44 }}
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollDoctors("right")}
+                  className="btn btn-outline"
+                  style={{ padding: "8px 16px", minWidth: 44 }}
+                >
+                  →
+                </button>
+              </div>
+
+              <motion.div
+                ref={doctorsSliderRef}
+                className="doctor-carousel"
+                variants={stagger}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+              >
+                {featuredDoctors.map((doc, i) => {
+                  const docAccent = accentColors[(i + 2) % accentColors.length]; // Offset color index for variety
+                  return (
+                    <motion.div
+                      key={doc._id}
+                      variants={fadeUp}
+                      className="hover-lift doctor-carousel-item"
+                      style={{
+                        background: `linear-gradient(145deg, ${theme.white}, ${theme.bg})`,
+                        borderRadius: "32px",
+                        padding: "28px",
+                        border: `1px solid ${theme.border}`,
+                        position: "relative",
+                        transition: "all 0.3s ease",
+                        textAlign: "center",
+                      }}
+                    >
                     {/* Decorative top bar */}
                     <div
                       style={{
@@ -766,10 +823,11 @@ export default function AboutPage() {
                         Book
                       </Link>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            </>
           )}
           <div
             style={{
