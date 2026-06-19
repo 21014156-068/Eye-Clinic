@@ -248,7 +248,7 @@ export default function HomePage() {
       <section
         className="hero-section"
         style={{
-          padding: "120px 0",
+          padding: "80px 0",
           background: "white",
           overflow: "hidden",
           minHeight: "80vh",
