@@ -1082,10 +1082,18 @@ export default function HomePage() {
                 answer your questions and schedule your visit.
               </p>
               <div style={{ display: "flex", gap: "8px", flexWrap: "nowrap" }}>
-                <Link to="/appointment" className="btn btn-primary">
+                <Link
+                  to="/appointment"
+                  className="btn btn-primary"
+                  style={{ fontSize: "0.875rem" }}
+                >
                   Book Appointment →
                 </Link>
-                <Link to="/contact" className="btn btn-outline">
+                <Link
+                  to="/contact"
+                  className="btn btn-outline"
+                  style={{ fontSize: "0.875rem" }}
+                >
                   Contact Us
                 </Link>
               </div>
