@@ -649,180 +649,186 @@ export default function AboutPage() {
                         textAlign: "center",
                       }}
                     >
-                    {/* Decorative top bar */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 20,
-                        right: 20,
-                        height: "4px",
-                        background: `linear-gradient(90deg, ${docAccent.primary}, ${docAccent.hover})`,
-                        borderRadius: "4px",
-                      }}
-                    />
-
-                    {/* Avatar / Photo */}
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        marginBottom: 20,
-                      }}
-                    >
-                      {doc.photo ? (
-                        <img
-                          src={doc.photo}
-                          alt={doc.name}
-                          style={{
-                            width: "130px",
-                            height: "130px",
-                            borderRadius: "50%",
-                            objectFit: "cover",
-                            border: `4px solid ${theme.white}`,
-                            boxShadow: `0 15px 30px ${docAccent.light}`,
-                          }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: "130px",
-                            height: "130px",
-                            borderRadius: "50%",
-                            background: `linear-gradient(135deg, ${docAccent.primary}, ${docAccent.hover})`,
-                            display: "grid",
-                            placeItems: "center",
-                            color: "white",
-                            fontSize: "2rem",
-                            fontWeight: 800,
-                            fontFamily: "'DM Serif Display', serif",
-                            boxShadow: `0 15px 30px ${docAccent.light}`,
-                          }}
-                        >
-                          {getInitials(doc.name)}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Role badge */}
-                    <div style={{ textAlign: "center", marginBottom: 12 }}>
-                      <span
+                      {/* Decorative top bar */}
+                      <div
                         style={{
-                          background: docAccent.light,
-                          color: docAccent.primary,
-                          padding: "4px 12px",
-                          borderRadius: "40px",
-                          fontSize: "0.7rem",
-                          fontWeight: 700,
+                          position: "absolute",
+                          top: 0,
+                          left: 20,
+                          right: 20,
+                          height: "4px",
+                          background: `linear-gradient(90deg, ${docAccent.primary}, ${docAccent.hover})`,
+                          borderRadius: "4px",
+                        }}
+                      />
+
+                      {/* Avatar / Photo */}
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          marginBottom: 20,
                         }}
                       >
-                        {doc.role || "Specialist"}
-                      </span>
-                    </div>
+                        {doc.photo ? (
+                          <img
+                            src={doc.photo}
+                            alt={doc.name}
+                            style={{
+                              width: "130px",
+                              height: "130px",
+                              borderRadius: "50%",
+                              objectFit: "cover",
+                              border: `4px solid ${theme.white}`,
+                              boxShadow: `0 15px 30px ${docAccent.light}`,
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: "130px",
+                              height: "130px",
+                              borderRadius: "50%",
+                              background: `linear-gradient(135deg, ${docAccent.primary}, ${docAccent.hover})`,
+                              display: "grid",
+                              placeItems: "center",
+                              color: "white",
+                              fontSize: "2rem",
+                              fontWeight: 800,
+                              fontFamily: "'DM Serif Display', serif",
+                              boxShadow: `0 15px 30px ${docAccent.light}`,
+                            }}
+                          >
+                            {getInitials(doc.name)}
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Name */}
-                    <h3
-                      style={{
-                        fontFamily: "'DM Serif Display', serif",
-                        fontSize: "1.6rem",
-                        margin: "0 0 6px",
-                        color: theme.navy,
-                      }}
-                    >
-                      {doc.name}
-                    </h3>
-
-                    {/* Bio */}
-                    <p
-                      style={{
-                        color: theme.slate,
-                        fontSize: "0.9rem",
-                        lineHeight: 1.6,
-                        margin: "12px 0 16px",
-                        flexGrow: 1,
-                      }}
-                    >
-                      {doc.bio?.length > 100
-                        ? `${doc.bio.slice(0, 100)}...`
-                        : doc.bio ||
-                          "Experienced eye care specialist committed to excellence."}
-                    </p>
-
-                    {/* Stats row */}
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-around",
-                        margin: "20px 0 16px",
-                        padding: "12px 0",
-                        borderTop: `1px solid ${theme.borderLight}`,
-                        borderBottom: `1px solid ${theme.borderLight}`,
-                      }}
-                    >
-                      <div style={{ textAlign: "center" }}>
-                        <div
+                      {/* Role badge */}
+                      <div style={{ textAlign: "center", marginBottom: 12 }}>
+                        <span
                           style={{
-                            fontWeight: 800,
-                            fontSize: "1.2rem",
+                            background: docAccent.light,
                             color: docAccent.primary,
+                            padding: "4px 12px",
+                            borderRadius: "40px",
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
                           }}
                         >
-                          {doc.experienceYears || "10"}+
+                          {doc.role || "Specialist"}
+                        </span>
+                      </div>
+
+                      {/* Name */}
+                      <h3
+                        style={{
+                          fontFamily: "'DM Serif Display', serif",
+                          fontSize: "1.6rem",
+                          margin: "0 0 6px",
+                          color: theme.navy,
+                        }}
+                      >
+                        {doc.name}
+                      </h3>
+
+                      {/* Bio */}
+                      <p
+                        style={{
+                          color: theme.slate,
+                          fontSize: "0.9rem",
+                          lineHeight: 1.6,
+                          margin: "12px 0 16px",
+                          flexGrow: 1,
+                        }}
+                      >
+                        {doc.bio?.length > 100
+                          ? `${doc.bio.slice(0, 100)}...`
+                          : doc.bio ||
+                            "Experienced eye care specialist committed to excellence."}
+                      </p>
+
+                      {/* Stats row */}
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-around",
+                          margin: "20px 0 16px",
+                          padding: "12px 0",
+                          borderTop: `1px solid ${theme.borderLight}`,
+                          borderBottom: `1px solid ${theme.borderLight}`,
+                        }}
+                      >
+                        <div style={{ textAlign: "center" }}>
+                          <div
+                            style={{
+                              fontWeight: 800,
+                              fontSize: "1.2rem",
+                              color: docAccent.primary,
+                            }}
+                          >
+                            {doc.experienceYears || "10"}+
+                          </div>
+                          <div
+                            style={{ fontSize: "0.7rem", color: theme.slate }}
+                          >
+                            Years
+                          </div>
                         </div>
-                        <div style={{ fontSize: "0.7rem", color: theme.slate }}>
-                          Years
+                        <div style={{ textAlign: "center" }}>
+                          <div
+                            style={{
+                              fontWeight: 800,
+                              fontSize: "1.2rem",
+                              color: docAccent.primary,
+                            }}
+                          >
+                            ⭐ {doc.rating || "4.5"}
+                          </div>
+                          <div
+                            style={{ fontSize: "0.7rem", color: theme.slate }}
+                          >
+                            Rating
+                          </div>
+                        </div>
+                        <div style={{ textAlign: "center" }}>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: "0.8rem",
+                              color: docAccent.primary,
+                            }}
+                          >
+                            {doc.availabilityStatus || "Available"}
+                          </div>
+                          <div
+                            style={{ fontSize: "0.7rem", color: theme.slate }}
+                          >
+                            Status
+                          </div>
                         </div>
                       </div>
-                      <div style={{ textAlign: "center" }}>
-                        <div
+
+                      {/* Buttons */}
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 12,
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Link
+                          to="/appointment"
+                          className="btn btn-primary"
                           style={{
-                            fontWeight: 800,
-                            fontSize: "1.2rem",
-                            color: docAccent.primary,
-                          }}
-                        >
-                          ⭐ {doc.rating || "4.5"}
-                        </div>
-                        <div style={{ fontSize: "0.7rem", color: theme.slate }}>
-                          Rating
-                        </div>
-                      </div>
-                      <div style={{ textAlign: "center" }}>
-                        <div
-                          style={{
-                            fontWeight: 600,
+                            padding: "8px 20px",
                             fontSize: "0.8rem",
-                            color: docAccent.primary,
+                            background: docAccent.primary,
                           }}
                         >
-                          {doc.availabilityStatus || "Available"}
-                        </div>
-                        <div style={{ fontSize: "0.7rem", color: theme.slate }}>
-                          Status
-                        </div>
+                          Book
+                        </Link>
                       </div>
-                    </div>
-
-                    {/* Buttons */}
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 12,
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Link
-                        to="/appointment"
-                        className="btn btn-primary"
-                        style={{
-                          padding: "8px 20px",
-                          fontSize: "0.8rem",
-                          background: docAccent.primary,
-                        }}
-                      >
-                        Book
-                      </Link>
-                    </div>
                     </motion.div>
                   );
                 })}
