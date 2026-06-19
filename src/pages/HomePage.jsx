@@ -119,6 +119,7 @@ export default function HomePage() {
 
   return (
     <main
+      className="page-container"
       style={{
         background: theme.bg,
         color: theme.navy,
@@ -197,6 +198,9 @@ export default function HomePage() {
         }
         .scroll-arrow.left { left: -25px; }
         .scroll-arrow.right { right: -25px; }
+        /* Desktop-only page padding */
+        .page-container { padding: 0; }
+        @media (min-width: 769px) { .page-container { padding: 40px 80px; } }
 
         @media (max-width: 768px) {
           .scroll-arrow { width: 40px; height: 40px; font-size: 1rem; }
