@@ -154,6 +154,25 @@ export default function AboutPage() {
         .grid-4 { display: grid; gap: 30px; grid-template-columns: repeat(4, 1fr); }
         @media (max-width: 1024px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) {
+          .doctor-scroll-row {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 6px;
+          }
+          .doctor-scroll-row > * {
+            flex: 0 0 100%;
+            min-width: 100%;
+            scroll-snap-align: start;
+          }
+        }
+        @media (max-width: 768px) {
+          .philosophy-visual { order: -1; }
+          .philosophy-text { order: 1; }
+        }
         
         /* Floating Glow Animation */
         .ambient-glow {
@@ -569,7 +588,7 @@ export default function AboutPage() {
             <div>No doctors found in database.</div>
           ) : (
             <motion.div
-              className="grid-3"
+              className="grid-3 doctor-scroll-row"
               variants={stagger}
               initial="hidden"
               whileInView="visible"
@@ -792,6 +811,7 @@ export default function AboutPage() {
         <div style={{ width: theme.container, margin: "0 auto" }}>
           <div className="grid-2" style={{ alignItems: "center", gap: "60px" }}>
             <motion.div
+              className="philosophy-text"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
@@ -865,6 +885,7 @@ export default function AboutPage() {
             </motion.div>
 
             <motion.div
+              className="philosophy-visual"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
